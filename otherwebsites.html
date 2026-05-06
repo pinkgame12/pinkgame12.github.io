@@ -1,1 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+<!-- ============================================================
+  PINKGAME — otherwebsites.html
+  A page of links to other websites. Same visual style as games.html.
+
+  QUICK REFERENCE — what you'll edit:
+    1. Page title        → <title> tag below
+    2. Hero heading      → find "Other Websites" in the HTML section
+    3. Hero subtext      → find "A collection of" in the HTML
+    4. Website cards     → scroll to <script>, find "const sites"
+    5. Category buttons  → find "cats-bar" in the HTML
+============================================================ -->
+
+<title>Other Websites — PinkGame</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+
+<style>
+
+/* ── COLORS ─────────────────────────────────────────────────
+   Same variables as games.html. Change --pink to change the
+   whole accent color across the page. */
+:root {
+  --pink: #FF2D8A;
+  --glow: #FF2D8A88;
+  --dark: #0a0a0a;
+  --card: #111111;
+  --text: #cccccc;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--dark);
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background grid lines */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(#FF2D8A09 1px, transparent 1px),
+    linear-gradient(90deg, #FF2D8A09 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Corner glow */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 35% at 0% 0%, #FF2D8A10, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 100% 100%, #FF2D8A0c, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 36px; height: 60px;
+  background: #0a0a0af0;
+  border-bottom: 1px solid #FF2D8A22;
+  backdrop-filter: blur(12px);
+}
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900; font-size: 1.3rem;
+  color: var(--pink); letter-spacing: 3px;
+  text-shadow: 0 0 20px var(--glow);
+  text-decoration: none;
+}
+.hdr-div { width: 1px; height: 26px; background: #222; flex-shrink: 0; }
+nav { display: flex; gap: 2px; }
+nav a {
+  text-decoration: none; color: #555;
+  font-weight: 600; font-size: 0.82rem;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+nav a:hover { color: #ccc; background: #ffffff08; }
+nav a.active { color: var(--pink); }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 5;
+  padding: 52px 36px 32px;
+  max-width: 1300px; margin: 0 auto;
+}
+.hero-eyebrow {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.65rem; letter-spacing: 4px;
+  color: var(--pink); text-transform: uppercase;
+  margin-bottom: 12px; opacity: 0.7;
+}
+.hero h1 {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  line-height: 1.1; color: #fff;
+  text-shadow: 0 0 50px #FF2D8A44;
+  margin-bottom: 12px;
+}
+.hero h1 em { font-style: normal; color: var(--pink); }
+.hero p { color: #444; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.5px; }
+
+/* ── CATEGORY FILTER BUTTONS ──
+   TO ADD A CATEGORY:
+     <button class="cat-btn" onclick="setCategory(this,'yourcat')">Label</button>
+   Then set cat:"yourcat" on sites in the list below. */
+.cats-bar {
+  position: relative; z-index: 5;
+  max-width: 1300px; margin: 0 auto;
+  padding: 0 36px 26px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.cat-btn {
+  background: #111; border: 1px solid #1e1e1e;
+  color: #555; font-family: 'Rajdhani', sans-serif;
+  font-weight: 600; font-size: 0.8rem;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 7px 18px; border-radius: 4px;
+  cursor: pointer; transition: all 0.15s;
+}
+.cat-btn:hover { border-color: var(--pink); color: var(--pink); }
+.cat-btn.active { background: var(--pink); border-color: var(--pink); color: #fff; box-shadow: 0 0 16px #FF2D8A55; }
+
+/* ── SITE GRID ── */
+.grid-section {
+  position: relative; z-index: 5;
+  max-width: 1300px; margin: 0 auto;
+  padding: 0 36px 80px;
+}
+.section-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.65rem; letter-spacing: 3px;
+  text-transform: uppercase; color: #2e2e2e;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid #161616;
+}
+.section-label b { color: var(--pink); margin-right: 6px; }
+
+/* ── SITE CARDS ─────────────────────────────────────────────
+   Cards are wider than game cards since websites need more
+   description text. Grid fits 3 per row on desktop.
+   To change column count: edit minmax(300px, 1fr) — smaller
+   number = more columns, larger = fewer bigger cards. */
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.site-card {
+  background: var(--card);
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  display: block;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.site-card:hover {
+  border-color: var(--pink);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px #FF2D8A20, 0 0 0 1px #FF2D8A18;
+}
+
+/* Color bar at the top of each card — uses the site's accent color */
+.site-card .color-bar {
+  height: 3px;
+  width: 100%;
+}
+
+.site-card .card-body {
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Top row: icon + name + tag */
+.site-card .card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Site name — big bold text */
+.site-name {
+  font-weight: 700; font-size: 1rem;
+  color: #ddd; letter-spacing: 0.2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Bottom row: URL + arrow */
+.site-url-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.site-url {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.6rem;
+  color: #2a2a2a;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+.site-arrow {
+  font-size: 0.75rem;
+  color: #2a2a2a;
+  transition: color 0.15s, transform 0.15s;
+}
+.site-card:hover .site-arrow {
+  color: var(--pink);
+  transform: translateX(3px);
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative; z-index: 5;
+  text-align: center; padding: 18px;
+  border-top: 1px solid #111;
+  color: #252525; font-size: 0.75rem;
+  letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase;
+}
+footer b { color: #FF2D8A66; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #FF2D8A44; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pink); }
+
+@media (max-width: 680px) {
+  header { padding: 0 16px; }
+  .hero, .cats-bar, .grid-section { padding-left: 16px; padding-right: 16px; }
+  .site-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+  HEADER — same as games.html.
+  To link back to games: change href="#" on "Games" to games.html
+  To mark this page active: add class="active" to "Other Sites"
+============================================================ -->
+<header>
+  <a class="logo" href="games.html">PINKGAME</a>
+  <div class="hdr-div"></div>
+  <nav>
+    <a href="games.html">Games</a>
+    <a href="#" class="active">Other Sites</a>
+  </nav>
+</header>
+
+<!-- ============================================================
+  HERO — change the heading and subtext here.
+  Wrap words in <em></em> to make them pink.
+============================================================ -->
+<div class="hero">
+  <div class="hero-eyebrow">// Links</div>
+  <h1>Other <em>Websites.</em></h1>
+  <p>Other PinkGame sites in case the main is blocked — click the website to visit</p>
+</div>
+
+<!-- ============================================================
+  CATEGORY FILTER BUTTONS
+  TO ADD A NEW CATEGORY:
+    <button class="cat-btn" onclick="setCategory(this,'tools')">Tools</button>
+  Then set cat:"tools" on any site in the list below.
+============================================================ -->
+
+
+<div class="grid-section">
+  <div class="section-label"><b>//</b> <span id="sectionCount">10</span> Sites</div>
+  <div class="site-grid" id="siteGrid"></div>
+</div>
+
+<footer><b>PINKGAME</b> &nbsp;—&nbsp; 7+ Unblocked sites</footer>
+
+<script>
+/* ============================================================
+   SITES LIST — add, remove, or edit your website links here.
+
+   Each site is an object with these fields:
+
+     id      — unique number. Never duplicate. Keep counting up.
+
+     name    — display name shown on the card.
+
+     emoji   — icon shown in the rounded square on each card.
+                Any emoji works.
+
+     color   — accent color for the thin top bar on the card.
+                Use any hex color. Pick something that matches
+                the site's brand. Examples: "#FF0000", "#1DB954"
+
+     cat     — category. Must match a category button exactly.
+                Current options: "games" "tools" "social" "media" "other"
+                or any new one you add to the cats-bar buttons.
+
+     desc    — short description text shown on the card.
+                Keep it 1-2 sentences. Shows in grey under the name.
+
+     url     — the full website URL. Must start with https://
+                Opens in a new tab when clicked.
+
+   ─────────────────────────────────────────────────────────────
+   HOW TO ADD A SITE:
+     1. Copy any existing entry below.
+     2. Paste it at the bottom of the list (before the ];)
+     3. Change id to the next number.
+     4. Fill in name, emoji, color, cat, desc, url.
+     5. Save. Done.
+
+   HOW TO REMOVE A SITE:
+     Delete its entire { ... }, line.
+     Make sure the last entry does NOT have a trailing comma.
+
+   HOW TO CHANGE THE ACCENT COLOR BAR:
+     Edit the color: "#XXXXXX" field. This sets the thin colored
+     line at the top of each card.
+============================================================ */
+const sites = [
+  {
+    id: 1,
+    name:  "SFC",
+    emoji: "🌐",
+    color: "#FF2D8A",
+    cat:   "other",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://schoolflashcards5.github.io/flashcards/"
+  },
+  {
+    id: 2,
+    name:  "ek1243",
+    emoji: "🎮",
+    color: "#7c3aed",
+    cat:   "games",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 3,
+    name:  "jaysoninthesubway",
+    emoji: "🛠️",
+    color: "#f59e0b",
+    cat:   "tools",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 4,
+    name:  "PinkHubScripts",
+    emoji: "💬",
+    color: "#5865f2",
+    cat:   "social",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 5,
+    name:  "skibdiddy",
+    emoji: "🎵",
+    color: "#1DB954",
+    cat:   "media",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 6,
+    name:  "skibidichungus1",
+    emoji: "📺",
+    color: "#FF0000",
+    cat:   "media",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 7,
+    name:  "tabs234",
+    emoji: "🔧",
+    color: "#06b6d4",
+    cat:   "tools",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 8,
+    name:  "Website 8",
+    emoji: "🕹️",
+    color: "#10b981",
+    cat:   "games",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 9,
+    name:  "Website 9",
+    emoji: "📱",
+    color: "#f97316",
+    cat:   "social",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+  {
+    id: 10,
+    name:  "Website 10",
+    emoji: "⭐",
+    color: "#eab308",
+    cat:   "other",
+    desc:  "Placeholder — replace this with a real site name and description.",
+    url:   "https://example.com"
+  },
+];
+
+/* ── FILTER STATE ── */
+let currentCat = 'all', searchTerm = '';
+
+function setCategory(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = cat;
+  renderGrid();
+}
+
+/* renderGrid — builds all site cards and injects them into the page.
+   You don't need to edit this. */
+function renderGrid() {
+  const filtered = sites.filter(s =>
+    currentCat === 'all' || s.cat === currentCat
+  );
+
+  document.getElementById('sectionCount').textContent = filtered.length;
+
+  document.getElementById('siteGrid').innerHTML = filtered.map(s => {
+    /* Strip "https://" for the display URL shown at the bottom of each card */
+    const displayUrl = s.url.replace(/^https?:\/\//, '');
+
+    return `
+    <a class="site-card" href="${s.url}" target="_blank" rel="noopener noreferrer">
+      <div class="color-bar" style="background:${s.color};"></div>
+      <div class="card-body">
+        <div class="card-top">
+            <div class="site-name">${s.name}</div>
+          </div>
+        <div class="site-url-row">
+          <span class="site-url">${displayUrl}</span>
+          <span class="site-arrow">→</span>
+        </div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+renderGrid();
+</script>
+</body>
+</html>
