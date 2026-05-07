@@ -401,7 +401,7 @@ footer b { color: #FF2D8A66; }
   <div class="hdr-div"></div>
   <nav>
     <a href="#" class="active">Home</a>
-    <a href="pinkgame12.github.io/popular">Popular</a>
+    <a href="popular.html">Popular</a>
     <a href="#">New</a>
   </nav>
   <div class="search-bar">
@@ -527,7 +527,7 @@ footer b { color: #FF2D8A66; }
 ============================================================ */
 const games = [
   { id:1, name:"Jetpack Joyride!", emoji:"🚀", img:"https://tse2.mm.bing.net/th/id/OIP.pEu5r8OQgSMaKKkvK5yV6AHaDn?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/jetpack-joyride", isNew:false, isPop:false, isSfc:false },
-  { id:2, name:"Doom 1+2!", emoji:"💥", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeXeJFJB24bPdjHgRUCyIaavYqeB9oe9Rsgw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/webDOOM/public", isNew:false, isPop:false, isSfc:true },
+  { id:2, name:"Doom 1+2!", emoji:"💥", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeXeJFJB24bPdjHgRUCyIaavYqeB9oe9Rsgw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/webDOOM/public", isNew:false, isPop:true, isSfc:true },
   { id:3, name:"Drift Boss!", emoji:"🚗", img:"https://tse1.mm.bing.net/th/id/OIP.e-rHpfrNDgjrb5WCJtmgnAHaES?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/drift-boss/", isNew:false, isPop:false, isSfc:false },
   { id:4, name:"Animal Arena!", emoji:"🐾", img:"https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2673990/header.jpg?t=1723312296", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/animal-arena/", isNew:false, isPop:false, isSfc:false },
   { id:5, name:"Dinosaur Game!", emoji:"🦖", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTriRa08LT5_44xw-Rqo3_BpkSEPS47B0_B-A&s", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/dinosaur-game/", isNew:false, isPop:false, isSfc:false },
@@ -540,7 +540,7 @@ const games = [
   { id:12, name:"FNAF 4 Halloween!", emoji:"🎃", img:"https://github.com/SchoolFlashCards5/flashcards/blob/main/fnaf4halloween.jpg?raw=true", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf4halloween", isNew:false, isPop:false, isSfc:false },
   { id:13, name:"FNAF 3!", emoji:"🐻", img:"https://th.bing.com/th/id/OIP.TQtgkQVqbouFFZjEaogyCgHaEK?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf3", isNew:false, isPop:false, isSfc:false },
   { id:14, name:"A Dance of Fire and Ice", emoji:"🎵", img:"https://tse1.mm.bing.net/th/id/OIP.-qLRR7Qoa0e5FYOvdKL_fgHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/fire-ice/", isNew:false, isPop:false, isSfc:false },
-  { id:15, name:"Geometry Lite!", emoji:"🔷", img:"https://tse3.mm.bing.net/th/id/OIP.mPXfDKMpSF5nK-gIuWY3sQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/geometry-lite/", isNew:false, isPop:false, isSfc:false },
+  { id:15, name:"Geometry Lite!", emoji:"🔷", img:"https://tse3.mm.bing.net/th/id/OIP.mPXfDKMpSF5nK-gIuWY3sQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/geometry-lite/", isNew:false, isPop:true, isSfc:false },
   { id:16, name:"FNAF 2!", emoji:"🐻", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSv9kqCGr10bvrGn5DU3G8NmTeNPtqZjxYCIw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf2", isNew:false, isPop:false, isSfc:true },
   { id:17, name:"FNAF 1!", emoji:"🐻", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSFgSrXhj4YY-AAx5_P_CBBdYX5DSuVh8bZw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf1", isNew:false, isPop:false, isSfc:true },
   { id:18, name:"2048!", emoji:"🔢", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqkypx7h26Ajb7LRsl5sbxzRIrZWvGN0TZZA&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/2048", isNew:false, isPop:false, isSfc:true },
@@ -549,11 +549,11 @@ const games = [
   { id:21, name:"Minesweeper!", emoji:"💣", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCwIdCYJnRmDUQnpDKNvY31bHNh_3NevoPjg&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/minesweeper", isNew:false, isPop:false, isSfc:true },
   { id:22, name:"Minecraft!", emoji:"⛏️", img:"https://wallpaper.dog/large/815735.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/mc", isNew:false, isPop:false, isSfc:false },
   { id:23, name:"CSGO Clicker!", emoji:"🔫", img:"https://geometrydash.io/data/image/game/csgoclicker.PNG", bg:"#111111", cat:"strategy", url:"https://schoolflashcards3.github.io/CSGOClicker/", isNew:false, isPop:false, isSfc:true },
-  { id:24, name:"Retro Bowl!", emoji:"🏈", img:"https://thegadgetlite.com/wp-content/uploads/2023/02/retro-bowl-1024x512.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/retro-bowl-unblocked", isNew:false, isPop:false, isSfc:false },
+  { id:24, name:"Retro Bowl!", emoji:"🏈", img:"https://thegadgetlite.com/wp-content/uploads/2023/02/retro-bowl-1024x512.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/retro-bowl-unblocked", isNew:false, isPop:true, isSfc:false },
   { id:25, name:"Subway Surfers!", emoji:"🏃", img:"https://th.bing.com/th/id/OIP.b5-KggaPRTioUNh2mk2mEgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/subway", isNew:false, isPop:false, isSfc:false },
   { id:26, name:"Slither.IO!", emoji:"🐍", img:"https://wallpaperaccess.com/full/5720727.jpg", bg:"#111111", cat:"io", url:"https://schoolflashcards5.github.io/slither-io", isNew:false, isPop:false, isSfc:false },
   { id:27, name:"Fruit Ninja!", emoji:"🍉", img:"https://th.bing.com/th/id/R.99388c093ab0db9347d6ecfd99370474?rik=2ISiCYnsT4GNOA&pid=ImgRaw&r=0", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fruit-ninja", isNew:false, isPop:false, isSfc:false },
-  { id:28, name:"Cookie Clicker!", emoji:"🍪", img:"https://th.bing.com/th/id/OIP.sNzuFjc75su2lU5Pb5ZJvgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/cookieNEW/", isNew:false, isPop:false, isSfc:true },
+  { id:28, name:"Cookie Clicker!", emoji:"🍪", img:"https://th.bing.com/th/id/OIP.sNzuFjc75su2lU5Pb5ZJvgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/cookieNEW/", isNew:false, isPop:true, isSfc:true },
   { id:29, name:"Moto X3M!", emoji:"🏍️", img:"https://imgs.crazygames.com/moto-x3m_1x1/20231122033955/moto-x3m_1x1-cover?format=auto&quality=100&metadata=none&width=1200", bg:"#111111", cat:"action", url:"https://schoolflashcards3.github.io/motox3m/", isNew:false, isPop:false, isSfc:false },
   { id:30, name:"Bitcoin Clicker!", emoji:"₿", img:"https://img.itch.zone/aW1nLzc1MzUxOTUucG5n/original/zQmEXl.png", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/bitCoin_clicker/", isNew:false, isPop:false, isSfc:false },
   { id:31, name:"Flappy Bird!", emoji:"🐦", img:"https://data2.1freewallpapers.com/download/flappy-bird-game-popular-1366x768.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/flappy-bird", isNew:false, isPop:false, isSfc:false },
