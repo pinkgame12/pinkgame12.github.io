@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<!-- ============================================================
+  PINKGAME — games.html
+  This is the main games page. index.html loads first, plays
+  the loading screen, then redirects here.
+
+  QUICK REFERENCE — what you'll edit most:
+    1. Page title          → <title> tag below
+    2. Site name in header → search "PINKGAME" in the HTML section
+    3. Hero text           → search "Play Anything" in the HTML section
+    4. Subtext             → search "Free browser games" in the HTML
+    5. Category buttons    → search "cats-bar" in the HTML section
+    6. Games list          → scroll to the <script> section, find "const games"
+    7. Colors/theme        → CSS :root block near the top of <style>
+    8. Footer text         → search "<footer>" in the HTML section
+============================================================ -->
+
+<!-- PAGE TITLE — shown in the browser tab -->
+<title>PinkGame</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<!-- FONTS — Orbitron is used for the logo/headings, Rajdhani for body text.
+     To change fonts go to https://fonts.google.com, pick one, copy the
+     @import link and replace the href below. Then update font-family
+     in the CSS wherever you see 'Orbitron' or 'Rajdhani'. -->
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+
+<style>
+
+/* ============================================================
+   CSS VARIABLES — change site-wide colors here, ONE place.
+   --pink  : main accent color (buttons, glows, logo, badges)
+   --glow  : the glow/shadow version of pink (keep it the same
+             color but add 88 at the end for ~53% opacity)
+   --dark  : page background color
+   --card  : game card background color
+   --text  : default body text color
+   To change the whole color scheme just swap --pink and --glow.
+   Example for a blue theme:
+     --pink: #2D8AFF;
+     --glow: #2D8AFF88;
+============================================================ */
+:root {
+  --pink:  #FF2D8A;
+  --glow:  #FF2D8A88;
+  --dark:  #0a0a0a;
+  --card:  #111111;
+  --text:  #cccccc;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--dark);
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* BACKGROUND GRID LINES — the faint pink grid behind everything.
+   To remove it entirely, delete both body::before and body::after blocks.
+   To change grid color, replace #FF2D8A09 with any hex + 2-digit opacity.
+   To change grid size, change background-size: 44px 44px to whatever. */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(#FF2D8A09 1px, transparent 1px),
+    linear-gradient(90deg, #FF2D8A09 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+  z-index: 0;
+}
+/* CORNER GLOW — soft pink radial glow in top-left and bottom-right.
+   To remove, delete this whole body::after block. */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 35% at 0% 0%, #FF2D8A10, transparent 65%),
+    radial-gradient(ellipse 45% 35% at 100% 100%, #FF2D8A0c, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ─────────────────────────────────────────────────
+   The top bar. Sticky so it stays visible when scrolling.
+   To change height: edit height: 60px
+   To change background opacity: edit the last 2 digits of #0a0a0af0
+     f0 = ~94% opaque. ff = fully opaque. 88 = ~53%.
+   To change the pink underline: edit border-bottom color.
+──────────────────────────────────────────────────────────── */
+header {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 36px; height: 60px;
+  background: #0a0a0af0;
+  border-bottom: 1px solid #FF2D8A22;
+  backdrop-filter: blur(12px);
+}
+
+/* LOGO TEXT — the site name in the top-left.
+   To change the font size: edit font-size: 1.3rem
+   To change letter spacing: edit letter-spacing: 3px
+   Color is pulled from --pink variable above. */
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900; font-size: 1.3rem;
+  color: var(--pink); letter-spacing: 3px;
+  text-shadow: 0 0 20px var(--glow);
+  text-decoration: none;
+}
+
+/* The thin vertical divider line between logo and nav links */
+.hdr-div { width: 1px; height: 26px; background: #222; flex-shrink: 0; }
+
+/* NAV LINKS — Home, Popular, New in the header.
+   To add a new nav link, copy one <a> tag in the HTML and change the text.
+   To make a link active (highlighted pink), add class="active" to it.
+   To link to another page, replace href="#" with the URL. */
+nav { display: flex; gap: 2px; }
+nav a {
+  text-decoration: none; color: #555;
+  font-weight: 600; font-size: 0.82rem;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+nav a:hover { color: #ccc; background: #ffffff08; }
+nav a.active { color: var(--pink); }
+
+/* SEARCH BAR — top-right search box.
+   To change width: edit width: 250px
+   To remove the search bar entirely, delete the .search-bar CSS and
+   the <div class="search-bar"> block in the HTML. */
+.search-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: auto;
+  background: #141414; border: 1px solid #222;
+  border-radius: 5px; padding: 7px 14px; width: 250px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar:focus-within { border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A18; }
+.search-bar svg { color: #444; flex-shrink: 0; }
+.search-bar input {
+  background: none; border: none; outline: none;
+  color: #ddd; font-family: 'Rajdhani', sans-serif;
+  font-size: 0.9rem; font-weight: 500; width: 100%;
+}
+.search-bar input::placeholder { color: #3a3a3a; }
+
+/* ── HERO SECTION ────────────────────────────────────────────
+   The big text area at the top of the page.
+   To edit the text, find <div class="hero"> in the HTML below.
+   To hide the hero entirely, add display:none to .hero
+──────────────────────────────────────────────────────────── */
+.hero {
+  position: relative; z-index: 5;
+  padding: 52px 36px 32px;
+  max-width: 1300px; margin: 0 auto;
+}
+/* Small text above the main heading — "// Unblocked Games" */
+.hero-eyebrow {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.65rem; letter-spacing: 4px;
+  color: var(--pink); text-transform: uppercase;
+  margin-bottom: 12px; opacity: 0.7;
+}
+/* Main big heading — "Play Anything. No Limits." */
+.hero h1 {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  line-height: 1.1; color: #fff;
+  text-shadow: 0 0 50px #FF2D8A44;
+  margin-bottom: 12px;
+}
+/* The <em> tag inside h1 turns text pink.
+   Example: <h1>Play Anything.<br><em>No Limits.</em></h1>
+   Wrap any word in <em></em> to make it pink. */
+.hero h1 em { font-style: normal; color: var(--pink); }
+/* Subtitle below the heading */
+.hero p { color: #444; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.5px; }
+
+/* ── CATEGORY FILTER BUTTONS ─────────────────────────────────
+   The row of filter buttons (All, Arcade, Puzzle, etc.)
+
+   TO ADD A NEW CATEGORY:
+     1. Add a button in the HTML cats-bar section:
+          <button class="cat-btn" onclick="setCategory(this,'yourcat')">YourCat</button>
+     2. In the games list in the <script>, set cat:"yourcat" on any game.
+     The filter will automatically work — no other changes needed.
+
+   TO REMOVE A CATEGORY:
+     Delete the button from the HTML. Games with that cat value
+     will still show under "All", just won't have a dedicated filter.
+──────────────────────────────────────────────────────────── */
+.cats-bar {
+  position: relative; z-index: 5;
+  max-width: 1300px; margin: 0 auto;
+  padding: 0 36px 26px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.cat-btn {
+  background: #111; border: 1px solid #1e1e1e;
+  color: #555; font-family: 'Rajdhani', sans-serif;
+  font-weight: 600; font-size: 0.8rem;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  padding: 7px 18px; border-radius: 4px;
+  cursor: pointer; transition: all 0.15s;
+}
+.cat-btn:hover { border-color: var(--pink); color: var(--pink); }
+.cat-btn.active { background: var(--pink); border-color: var(--pink); color: #fff; box-shadow: 0 0 16px #FF2D8A55; }
+
+/* ── GAME GRID ───────────────────────────────────────────────
+   The grid of game cards.
+   To change how many columns: edit minmax(188px, 1fr)
+     Smaller number = more columns. Larger = fewer, bigger cards.
+   To change gap between cards: edit gap: 12px
+──────────────────────────────────────────────────────────── */
+.grid-section {
+  position: relative; z-index: 5;
+  max-width: 1300px; margin: 0 auto;
+  padding: 0 36px 80px;
+}
+/* "// 20 Games" label above the grid */
+.section-label {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.65rem; letter-spacing: 3px;
+  text-transform: uppercase; color: #2e2e2e;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid #161616;
+}
+.section-label b { color: var(--pink); margin-right: 6px; }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+  gap: 12px;
+}
+
+/* Individual game card */
+.game-card {
+  background: var(--card); border: 1px solid #1a1a1a;
+  border-radius: 7px; overflow: hidden;
+  cursor: pointer; position: relative;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.game-card:hover {
+  border-color: var(--pink);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px #FF2D8A20, 0 0 0 1px #FF2D8A18;
+}
+
+/* THUMBNAIL AREA — the top part of each card showing emoji or image.
+   aspect-ratio 16/10 controls the height. Change to 16/9 for wider,
+   or 1/1 for square thumbnails. */
+.thumb {
+  width: 100%; aspect-ratio: 16/10;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.8rem; position: relative; overflow: hidden;
+}
+/* Gradient fade at the bottom of the thumbnail */
+.thumb::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 20%, #11111199);
+}
+/* Play button overlay that appears on hover */
+.play-overlay {
+  position: absolute; inset: 0;
+  background: #FF2D8A14;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s; z-index: 2;
+}
+.game-card:hover .play-overlay { opacity: 1; }
+.play-btn {
+  width: 42px; height: 42px;
+  background: var(--pink); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; box-shadow: 0 0 22px #FF2D8Aaa;
+}
+
+/* Card bottom info section — game name and category tag */
+.info { padding: 10px 12px 12px; }
+.name {
+  font-weight: 700; font-size: 0.92rem;
+  color: #ccc; margin-bottom: 5px; letter-spacing: 0.2px;
+}
+/* The small category tag pill (e.g. "arcade", "puzzle") */
+.tag {
+  display: inline-block;
+  font-size: 0.65rem; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: #383838; border: 1px solid #1e1e1e;
+  padding: 2px 8px; border-radius: 3px;
+}
+
+/* ── BADGES ──────────────────────────────────────────────────
+   Badges are the small labels in the top-left corner of cards.
+   There are 3 badge types:
+     NEW  → pink   → set isNew: true  on a game
+     HOT  → orange → set isPop: true  on a game
+     SFC  → blue   → set isSfc: true  on a game (purely visual, does NOT block the game)
+
+   STACKING ORDER when multiple badges are on one card:
+     - NEW always renders first (top position, left: 7px, top: 7px)
+     - HOT renders second (pushes down to top: 30px if NEW is present)
+     - SFC renders third  (pushes down further if HOT or NEW present)
+
+   To change a badge color, edit the background: value below.
+   To change badge text, edit the text inside renderGrid() in the script.
+──────────────────────────────────────────────────────────── */
+
+/* NEW badge — pink, shows on games with isNew: true */
+.badge-new {
+  position: absolute; top: 7px; left: 7px;
+  background: var(--pink); color: #fff;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.52rem; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 3px; z-index: 3;
+  box-shadow: 0 0 10px #FF2D8A99;
+}
+
+/* HOT badge — orange, shows on games with isPop: true */
+.badge-popular {
+  position: absolute; top: 7px; left: 7px;
+  background: #ff8c00; color: #fff;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.52rem; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 3px; z-index: 3;
+  box-shadow: 0 0 10px #ff8c0099;
+}
+/* Push HOT down when NEW is also present */
+.badge-popular.has-new { top: 30px; }
+
+/* SFC badge — blue, shows on games with isSfc: true
+   This is now purely a visual tag — it does NOT dim or block the card.
+   To change the label text, find "SFC" in renderGrid() below.
+   To change the color: edit background: #1a6fff below. */
+.badge-sfc {
+  position: absolute; top: 7px; left: 7px;
+  background: #1a6fff; color: #fff;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.52rem; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 3px; z-index: 3;
+  box-shadow: 0 0 10px #1a6fff99;
+}
+/* Push SFC down depending on which other badges are present */
+.badge-sfc.has-new  { top: 30px; }   /* NEW is above it */
+.badge-sfc.has-both { top: 53px; }   /* NEW and HOT are both above it */
+
+/* ── FOOTER ──────────────────────────────────────────────────
+   Bottom bar. To change text, find <footer> in the HTML.
+   To hide footer: add display:none to footer { }
+──────────────────────────────────────────────────────────── */
+footer {
+  position: relative; z-index: 5;
+  text-align: center; padding: 18px;
+  border-top: 1px solid #111;
+  color: #252525; font-size: 0.75rem;
+  letter-spacing: 1.5px; font-weight: 600; text-transform: uppercase;
+}
+footer b { color: #FF2D8A66; }
+
+/* SCROLLBAR — custom thin pink scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #FF2D8A44; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pink); }
+
+/* MOBILE — adjusts padding for small screens.
+   To change the breakpoint: edit max-width: 680px */
+@media (max-width: 680px) {
+  header { padding: 0 16px; }
+  .search-bar { width: 140px; }
+  .hero, .cats-bar, .grid-section { padding-left: 16px; padding-right: 16px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+  HEADER
+  - "PINKGAME" text is the site name/logo (top-left)
+  - Nav links: Home, Popular, New (add more <a> tags here)
+  - The search box is at the far right (margin-left: auto pushes it over)
+  To change the logo text: edit >PINKGAME< below
+  To add a nav link: <a href="URL">Label</a>
+  To make a nav link active/highlighted: add class="active"
+============================================================ -->
+<header>
+  <a class="logo" href="#">PINKGAME</a>
+  <div class="hdr-div"></div>
+  <nav>
+    <a href="#" class="active">Home</a>
+    <a href="#">Popular</a>
+    <a href="#">New</a>
+  </nav>
+  <div class="search-bar">
+    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search..." id="searchInput" oninput="filterGames()"/>
+  </div>
+</header>
+
+<!-- ============================================================
+  HERO SECTION
+  - hero-eyebrow: small text above heading  → change "// Unblocked Games"
+  - h1: big heading                         → change "Play Anything. No Limits."
+    Wrap words in <em></em> to make them pink.
+  - p: subtitle below heading               → change "Free browser games..."
+  To hide the hero entirely: add style="display:none" to the div below.
+============================================================ -->
+<div class="hero">
+  <div class="hero-eyebrow">// Unblocked Games</div>
+  <h1>Play Anything.<br><em>No Limits.</em></h1>
+  <p>Free browser games — no downloads, no BS</p>
+</div>
+
+<!-- ============================================================
+  CATEGORY FILTER BUTTONS
+  Each button filters the game grid to show only that category.
+  onclick="setCategory(this,'CATNAME')" — CATNAME must match
+  the cat: field in the games list exactly (case-sensitive).
+
+  TO ADD A CATEGORY:
+    <button class="cat-btn" onclick="setCategory(this,'rpg')">RPG</button>
+  Then set cat:"rpg" on games you want in that category.
+
+  TO REMOVE A CATEGORY:
+    Just delete the button. Games keep their cat value but only
+    show up under "All".
+
+  The "All" button always shows everything regardless of category.
+============================================================ -->
+<div class="cats-bar">
+  <button class="cat-btn active" onclick="setCategory(this,'all')">All</button>
+  <button class="cat-btn" onclick="setCategory(this,'arcade')">Arcade</button>
+  <button class="cat-btn" onclick="setCategory(this,'puzzle')">Puzzle</button>
+  <button class="cat-btn" onclick="setCategory(this,'action')">Action</button>
+  <button class="cat-btn" onclick="setCategory(this,'io')">IO Games</button>
+  <button class="cat-btn" onclick="setCategory(this,'strategy')">Strategy</button>
+</div>
+
+<!-- GAME GRID — cards are injected here by JavaScript. Don't edit inside .game-grid. -->
+<div class="grid-section">
+  <div class="section-label"><b>//</b> <span id="sectionCount">20</span> Games</div>
+  <div class="game-grid" id="gameGrid"></div>
+</div>
+
+<!-- ============================================================
+  FOOTER
+  To change footer text: edit between <footer> and </footer>.
+  <b> tags make text slightly brighter pink.
+============================================================ -->
+<footer><b>PINKGAME</b> &nbsp;—&nbsp; All games free to play &nbsp;—&nbsp; <b><a href="otherwebsites.html">OTHER WEBSITES</a></b></footer>
+
+<script>
+/* ============================================================
+   GAMES LIST — add, remove, or edit games here.
+
+   Each game is an object with these fields:
+
+     id      — unique number for each game. Never duplicate this.
+                Just keep counting up when you add new games.
+
+     name    — display name shown on the card. Can be anything.
+
+     emoji   — emoji shown as the thumbnail when img is null.
+                Any emoji works. Used as a fallback.
+
+     img     — thumbnail image URL. Set to null to use the emoji instead.
+                To use an image:
+                  img: "https://example.com/image.png"
+                  img: "images/mygame.jpg"  (relative path if self-hosted)
+                The image fills the card thumbnail and covers the bg color.
+                Best size: 320x200px or any 16:10 ratio image.
+
+     bg      — background color behind the emoji (only visible when img is null).
+                Use any dark hex color. Examples: "#0a0a12", "#100808"
+                This is a radial gradient from this color to pure black.
+
+     cat     — category string. Must exactly match a category button's
+                onclick value. Options: "arcade" "puzzle" "action" "io" "strategy"
+                or any custom category you add to the cats-bar buttons.
+
+     url     — the full URL the game opens when clicked.
+                Must include https:// — opens in a new tab.
+
+     isNew   — true or false. Shows pink "NEW" badge and sorts card to top.
+                Set to false once the game is no longer new.
+
+     isPop   — true or false. Shows orange "HOT" badge.
+                Independent from isNew — a game can have both badges.
+
+     isSfc   — true or false. Shows blue "SFC" badge.
+                This is purely a visual indicator — the card is fully
+                clickable and looks normal. It does NOT dim or block the game.
+
+   ─────────────────────────────────────────────────────────────
+   HOW TO ADD A GAME:
+     1. Copy any existing line below.
+     2. Paste it at the bottom of the list (before the ];).
+     3. Change id to the next number (e.g. if last is 20, use 21).
+     4. Fill in name, emoji, img, bg, cat, url, isNew, isPop, isSfc.
+     5. Save. Done.
+
+   Example new game:
+     { id:21, name:"Bloons TD 6", emoji:"🎈", img:null, bg:"#0a100a",
+       cat:"strategy", url:"https://www.bloons.com",
+       isNew:true, isPop:false, isSfc:false },
+
+   HOW TO REMOVE A GAME:
+     Delete its entire line (including the comma at the end).
+     Make sure the last game in the list does NOT have a trailing comma.
+
+   HOW TO CHANGE A THUMBNAIL IMAGE:
+     Replace img:null with img:"YOUR_IMAGE_URL"
+     Example: img:"https://i.imgur.com/abc123.png"
+============================================================ */
+const games = [
+  { id:1, name:"Jetpack Joyride!", emoji:"🚀", img:"https://tse2.mm.bing.net/th/id/OIP.pEu5r8OQgSMaKKkvK5yV6AHaDn?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/jetpack-joyride", isNew:false, isPop:false, isSfc:false },
+  { id:2, name:"Doom 1+2!", emoji:"💥", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeXeJFJB24bPdjHgRUCyIaavYqeB9oe9Rsgw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/webDOOM/public", isNew:false, isPop:false, isSfc:true },
+  { id:3, name:"Drift Boss!", emoji:"🚗", img:"https://tse1.mm.bing.net/th/id/OIP.e-rHpfrNDgjrb5WCJtmgnAHaES?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/drift-boss/", isNew:false, isPop:false, isSfc:false },
+  { id:4, name:"Animal Arena!", emoji:"🐾", img:"https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2673990/header.jpg?t=1723312296", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/animal-arena/", isNew:false, isPop:false, isSfc:false },
+  { id:5, name:"Dinosaur Game!", emoji:"🦖", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTriRa08LT5_44xw-Rqo3_BpkSEPS47B0_B-A&s", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/dinosaur-game/", isNew:false, isPop:false, isSfc:false },
+  { id:6, name:"PokemonFireRed!", emoji:"🔥", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzDMK5DgCHi7UohqEi6ijL_0_TiMBAu8-zCA&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/pokemon-firered/", isNew:false, isPop:false, isSfc:false },
+  { id:7, name:"Rocket League!", emoji:"⚽", img:"https://th.bing.com/th/id/R.9c31ca384c511abc490976fbe0d77513?rik=0iquzU6dhN6zYQ&pid=ImgRaw&r=0", bg:"#111111", cat:"action", url:"#", isNew:false, isPop:false, isSfc:false },
+  { id:8, name:"Run 3!", emoji:"🏃", img:"https://tse4.mm.bing.net/th/id/OIP.iJjSsJ2T4Ynyn72cZw1rTgHaEU?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/run3", isNew:false, isPop:false, isSfc:false },
+  { id:9, name:"GladiHoppers!", emoji:"⚔️", img:"https://tse3.mm.bing.net/th/id/OIP.5Tr4GwjxoPA_DzPJAW1C6wHaDn?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/gladdihoppers", isNew:false, isPop:false, isSfc:false },
+  { id:10, name:"1v1.LoL!", emoji:"🎯", img:"https://tse2.mm.bing.net/th/id/OIP.ASM6tUWCDbxvnZvSQT1GWgHaD4?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/1v1lol", isNew:false, isPop:false, isSfc:false },
+  { id:11, name:"FNAF Sister Location!", emoji:"🐻", img:"https://tse2.mm.bing.net/th/id/OIP.tmrpqrpz-I7DUfsZnerfkQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnafsl", isNew:false, isPop:false, isSfc:false },
+  { id:12, name:"FNAF 4 Halloween!", emoji:"🎃", img:"https://github.com/SchoolFlashCards5/flashcards/blob/main/fnaf4halloween.jpg?raw=true", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf4halloween", isNew:false, isPop:false, isSfc:false },
+  { id:13, name:"FNAF 3!", emoji:"🐻", img:"https://th.bing.com/th/id/OIP.TQtgkQVqbouFFZjEaogyCgHaEK?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf3", isNew:false, isPop:false, isSfc:false },
+  { id:14, name:"A Dance of Fire and Ice", emoji:"🎵", img:"https://tse1.mm.bing.net/th/id/OIP.-qLRR7Qoa0e5FYOvdKL_fgHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/fire-ice/", isNew:false, isPop:false, isSfc:false },
+  { id:15, name:"Geometry Lite!", emoji:"🔷", img:"https://tse3.mm.bing.net/th/id/OIP.mPXfDKMpSF5nK-gIuWY3sQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/geometry-lite/", isNew:false, isPop:false, isSfc:false },
+  { id:16, name:"FNAF 2!", emoji:"🐻", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSv9kqCGr10bvrGn5DU3G8NmTeNPtqZjxYCIw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf2", isNew:false, isPop:false, isSfc:true },
+  { id:17, name:"FNAF 1!", emoji:"🐻", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSFgSrXhj4YY-AAx5_P_CBBdYX5DSuVh8bZw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf1", isNew:false, isPop:false, isSfc:true },
+  { id:18, name:"2048!", emoji:"🔢", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqkypx7h26Ajb7LRsl5sbxzRIrZWvGN0TZZA&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/2048", isNew:false, isPop:false, isSfc:true },
+  { id:19, name:"Block Blast!", emoji:"🧩", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNhEnACclj7tRbtrB-TSUozTK3YBLm2Cghrw&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/blockblast", isNew:false, isPop:false, isSfc:true },
+  { id:20, name:"Snow Rider!", emoji:"🛷", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_XIUk_3JSrxB_yzBYnqzOVtm-Qdw4DGLctg&s", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/snowrider", isNew:false, isPop:false, isSfc:false },
+  { id:21, name:"Minesweeper!", emoji:"💣", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCwIdCYJnRmDUQnpDKNvY31bHNh_3NevoPjg&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/minesweeper", isNew:false, isPop:false, isSfc:true },
+  { id:22, name:"Minecraft!", emoji:"⛏️", img:"https://wallpaper.dog/large/815735.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/mc", isNew:false, isPop:false, isSfc:false },
+  { id:23, name:"CSGO Clicker!", emoji:"🔫", img:"https://geometrydash.io/data/image/game/csgoclicker.PNG", bg:"#111111", cat:"strategy", url:"https://schoolflashcards3.github.io/CSGOClicker/", isNew:false, isPop:false, isSfc:true },
+  { id:24, name:"Retro Bowl!", emoji:"🏈", img:"https://thegadgetlite.com/wp-content/uploads/2023/02/retro-bowl-1024x512.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/retro-bowl-unblocked", isNew:false, isPop:false, isSfc:false },
+  { id:25, name:"Subway Surfers!", emoji:"🏃", img:"https://th.bing.com/th/id/OIP.b5-KggaPRTioUNh2mk2mEgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/subway", isNew:false, isPop:false, isSfc:false },
+  { id:26, name:"Slither.IO!", emoji:"🐍", img:"https://wallpaperaccess.com/full/5720727.jpg", bg:"#111111", cat:"io", url:"https://schoolflashcards5.github.io/slither-io", isNew:false, isPop:false, isSfc:false },
+  { id:27, name:"Fruit Ninja!", emoji:"🍉", img:"https://th.bing.com/th/id/R.99388c093ab0db9347d6ecfd99370474?rik=2ISiCYnsT4GNOA&pid=ImgRaw&r=0", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fruit-ninja", isNew:false, isPop:false, isSfc:false },
+  { id:28, name:"Cookie Clicker!", emoji:"🍪", img:"https://th.bing.com/th/id/OIP.sNzuFjc75su2lU5Pb5ZJvgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/cookieNEW/", isNew:false, isPop:false, isSfc:true },
+  { id:29, name:"Moto X3M!", emoji:"🏍️", img:"https://imgs.crazygames.com/moto-x3m_1x1/20231122033955/moto-x3m_1x1-cover?format=auto&quality=100&metadata=none&width=1200", bg:"#111111", cat:"action", url:"https://schoolflashcards3.github.io/motox3m/", isNew:false, isPop:false, isSfc:false },
+  { id:30, name:"Bitcoin Clicker!", emoji:"₿", img:"https://img.itch.zone/aW1nLzc1MzUxOTUucG5n/original/zQmEXl.png", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/bitCoin_clicker/", isNew:false, isPop:false, isSfc:false },
+  { id:31, name:"Flappy Bird!", emoji:"🐦", img:"https://data2.1freewallpapers.com/download/flappy-bird-game-popular-1366x768.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/flappy-bird", isNew:false, isPop:false, isSfc:false },
+  { id:32, name:"Tiny Fishing!", emoji:"🎣", img:"https://th.bing.com/th/id/OIP.nPuB55Mp95w18r3p7rSOjgHaD4?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/tiny-fishing", isNew:false, isPop:false, isSfc:false },
+  { id:33, name:"Slope 3!", emoji:"🔺", img:"https://th.bing.com/th/id/OIP.FtKs5H6IkONNnA5qoyQNqwHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/slope3", isNew:false, isPop:false, isSfc:false },
+  { id:34, name:"Aquapark.IO!", emoji:"💧", img:"https://th.bing.com/th/id/OIP.NTFKPJqkEjic45gnivPLvQHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"io", url:"https://schoolflashcards5.github.io/aquapark-io", isNew:false, isPop:false, isSfc:false },
+  { id:35, name:"Axis Football League!", emoji:"🏈", img:"https://retrobowlcollege.io/data/image/screenshot-2023-11-23-105503.png", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/axis-football-league", isNew:false, isPop:false, isSfc:false },
+  { id:36, name:"Crossy Road!", emoji:"🚶", img:"https://th.bing.com/th/id/OIP.ZXvaWHcoqFPZcGo78fK9SQHaDk?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/crossy-road", isNew:false, isPop:false, isSfc:false },
+  { id:37, name:"Basketball Legends!", emoji:"🏀", img:"https://th.bing.com/th/id/OIP.ollyg9Yd7zX9DNtnkzsc-gHaEJ?rs=1&pid=ImgDetMain", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/basketball-legends", isNew:false, isPop:false, isSfc:false },
+  { id:38, name:"Cut the Rope!", emoji:"🪢", img:"https://th.bing.com/th/id/OIP.raV370_mlwudwsGzK28T0wHaEB?rs=1&pid=ImgDetMain", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/cut-the-rope", isNew:false, isPop:false, isSfc:false },
+  { id:39, name:"Touchdowners!", emoji:"🏈", img:"https://www.metacritic.com/a/img/catalog/provider/6/12/6-1-635169-52.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/touchdowners", isNew:false, isPop:false, isSfc:false },
+  { id:40, name:"Truck Loader 4!", emoji:"🚚", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsjzNG5lORTCkfqc_yn7CEhCQP5aRZP9_OOA&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/truck-loader-4/", isNew:false, isPop:false, isSfc:false },
+  { id:41, name:"GunSpin!", emoji:"🔫", img:"https://is1-ssl.mzstatic.com/image/thumb/Purple123/v4/7d/a4/6a/7da46af9-4953-70c6-6f3c-25444de561c9/pr_source.png/643x0w.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/gunspin/", isNew:false, isPop:false, isSfc:false },
+  { id:42, name:"Candy Jump!", emoji:"🍬", img:"https://www.coolmathgames.com/sites/default/files/CandyJump_OG-logo.jpg", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/candy-jump/", isNew:false, isPop:false, isSfc:false },
+  { id:43, name:"Deltarune!", emoji:"🌙", img:"https://github.com/SchoolFlashCards5/flashcards/blob/main/deltarune-heroes-blue-fire-aliqfub1bewvs4i5.jpg?raw=true", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/deltarune/", isNew:false, isPop:false, isSfc:false },
+];
+
+/* ── SORT ORDER ─────────────────────────────────────────────
+   Currently: NEW games go to the top, everything else keeps
+   its original order from the list above.
+   To change sort order, edit the .sort() line inside renderGrid().
+   Examples:
+     Sort alphabetically:
+       filtered.sort((a, b) => a.name.localeCompare(b.name));
+     Sort HOT to top (after NEW):
+       filtered.sort((a, b) => (b.isNew - a.isNew) || (b.isPop - a.isPop));
+────────────────────────────────────────────────────────────── */
+
+let currentCat = 'all', searchTerm = '';
+
+/* setCategory — called when a filter button is clicked.
+   You don't need to edit this. */
+function setCategory(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = cat;
+  renderGrid();
+}
+
+/* filterGames — called on every keypress in the search box.
+   You don't need to edit this. */
+function filterGames() {
+  searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  renderGrid();
+}
+
+/* renderGrid — builds and injects all game cards into the page.
+   BADGES: edit the text inside the quotes to change badge labels.
+     'NEW'  → the label on isNew cards
+     'HOT'  → the label on isPop cards
+     'SFC'  → the label on isSfc cards (purely visual, does not block the game)
+*/
+function renderGrid() {
+  let filtered = games.filter(g =>
+    (currentCat === 'all' || g.cat === currentCat) &&
+    g.name.toLowerCase().includes(searchTerm)
+  );
+
+  /* Sort: NEW games float to the top of the grid */
+  filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+
+  document.getElementById('sectionCount').textContent = filtered.length;
+
+  document.getElementById('gameGrid').innerHTML = filtered.map(g => {
+
+    /* Build badge HTML — stacks correctly based on which badges are active */
+    const newBadge = g.isNew ? '<div class="badge-new">NEW</div>' : '';
+    const popBadge = g.isPop
+      ? `<div class="badge-popular${g.isNew ? ' has-new' : ''}">HOT</div>`
+      : '';
+    /* SFC badge stacks below both NEW and HOT if they're present */
+    const sfcOffset = g.isNew && g.isPop ? ' has-both' : g.isNew || g.isPop ? ' has-new' : '';
+    const sfcBadge = g.isSfc
+      ? `<div class="badge-sfc${sfcOffset}">SFC</div>`
+      : '';
+
+    /* Thumbnail: show image if img is set, otherwise show emoji */
+    const thumb = g.img
+      ? `<img src="${g.img}" alt="${g.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;">`
+      : `<span style="position:relative;z-index:1;">${g.emoji}</span>`;
+
+    /* All cards are normal game-cards — SFC no longer blocks anything */
+    return `
+    <div class="game-card" onclick="openGame(${g.id})">
+      ${newBadge}${popBadge}${sfcBadge}
+      <div class="thumb" style="background: radial-gradient(circle at 35% 35%, ${g.bg}, #0a0a0a); position:relative;">
+        ${thumb}
+        <div class="play-overlay"><div class="play-btn">▶</div></div>
+      </div>
+      <div class="info">
+        <div class="name">${g.name}</div>
+        <span class="tag">${g.cat}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* openGame — opens the game URL in a new browser tab.
+   SFC no longer blocks — all games are clickable. */
+function openGame(id) {
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+  window.open(g.url, '_blank');
+}
+
+/* Kick off the initial render when the page loads */
+renderGrid();
+</script>
+</body>
+</html>
