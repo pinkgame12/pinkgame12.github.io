@@ -16,7 +16,6 @@
   --pink:  #FF2D8A;
   --glow:  #FF2D8A88;
   --dark:  #0a0a0a;
-  --card:  #111;
   --text:  #ccc;
   --owner: #ff9800;
   --ownerGlow: #ff980055;
@@ -438,7 +437,7 @@ const githubProvider = new firebase.auth.GithubAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 githubProvider.addScope('user:email');
 
-// Save login on this device across refreshes/reopens.
+// Save login across refreshes/reopens.
 const authPersistenceReady = auth
   .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .catch(err => {
@@ -483,6 +482,16 @@ function badgesToHTML(email) {
     .join('');
 }
 
+function badgeIdsToHTML(badgeIds) {
+  if (!Array.isArray(badgeIds)) return '';
+
+  return badgeIds.map(id => {
+    if (id === 'owner') return `<span class="chat-badge owner">OWNER</span>`;
+    if (id === 'sfc') return `<span class="chat-badge sfc">SFC</span>`;
+    return '';
+  }).join('');
+}
+
 // ── WARNING ─────────────────────────────────────────────────
 function acceptWarning() {
   warningAccepted = true;
@@ -490,6 +499,7 @@ function acceptWarning() {
 
   if (username) {
     showChatUI();
+    startListening();
     return;
   }
 
@@ -498,7 +508,7 @@ function acceptWarning() {
 }
 
 // ── AUTH / LOGIN ─────────────────────────────────────────────
-function setAuthUser(user, providerName) {
+function setAuthUser(user) {
   guestSession = false;
   currentEmail = normalizeEmail(user.email || user.providerData?.[0]?.email || '');
 
@@ -521,33 +531,26 @@ function showChatUI() {
 }
 
 function signInGoogle() {
-  authPersistenceReady.then(() => {
-    return auth.signInWithPopup(googleProvider);
-  }).then(res => {
-    setAuthUser(res.user, 'google');
-    if (warningAccepted) startListening();
-  }).catch(err => {
-    console.error('Google sign-in error:', err);
-    alert('Google sign-in failed.');
-  });
+  authPersistenceReady.then(() => auth.signInWithPopup(googleProvider))
+    .then(res => setAuthUser(res.user))
+    .catch(err => {
+      console.error('Google sign-in error:', err);
+      alert('Google sign-in failed.');
+    });
 }
 
 function signInGithub() {
-  authPersistenceReady.then(() => {
-    return auth.signInWithPopup(githubProvider);
-  }).then(res => {
-    setAuthUser(res.user, 'github');
-    if (warningAccepted) startListening();
-  }).catch(err => {
-    console.error('GitHub sign-in error:', err);
-    alert('GitHub sign-in failed.');
-  });
+  authPersistenceReady.then(() => auth.signInWithPopup(githubProvider))
+    .then(res => setAuthUser(res.user))
+    .catch(err => {
+      console.error('GitHub sign-in error:', err);
+      alert('GitHub sign-in failed.');
+    });
 }
 
 function guestMode() {
   const input = document.getElementById('guestNameInput');
   const val = input.value.trim();
-
   if (!val) return;
 
   guestSession = true;
@@ -578,10 +581,7 @@ function signOutUser() {
 
 // Restore saved login automatically.
 auth.onAuthStateChanged((user) => {
-  if (user) {
-    setAuthUser(user, user.providerData?.[0]?.providerId || 'firebase');
-    if (warningAccepted) startListening();
-  }
+  if (user) setAuthUser(user);
 });
 
 // ── REAL-TIME LISTENER ───────────────────────────────────────
@@ -604,7 +604,6 @@ function startListening() {
       if (chatEmpty) chatEmpty.style.display = 'none';
 
       container.querySelectorAll('.msg').forEach(el => el.remove());
-
       snap.forEach(doc => appendMessage(doc.data()));
     }, err => {
       console.error('Firestore error:', err);
@@ -624,9 +623,13 @@ function appendMessage(data) {
     : '';
 
   const initials = (data.username || '?').slice(0, 2).toUpperCase();
-  const color    = data.color || '#FF2D8A';
+  const color = data.color || '#FF2D8A';
   const avatarBg = color + '22';
-  const badgesHTML = badgesToHTML(data.email || '');
+
+  // NEW: badgeIds stored in Firestore (works on all devices)
+  const badgeHTML = (Array.isArray(data.badgeIds) && data.badgeIds.length)
+    ? badgeIdsToHTML(data.badgeIds)
+    : badgesToHTML(data.email || '');
 
   el.className = 'msg';
   el.innerHTML = `
@@ -636,7 +639,7 @@ function appendMessage(data) {
     <div class="msg-right">
       <div class="msg-meta">
         <span class="msg-username" style="color:${color}">${escHtml(data.username || '?')}</span>
-        <span class="msg-badges">${badgesHTML}</span>
+        <span class="msg-badges">${badgeHTML}</span>
         <span class="msg-time">${time}</span>
       </div>
       <div class="msg-text">${escHtml(data.text || '')}</div>
@@ -652,7 +655,7 @@ function sendMessage() {
   if (!username) return;
 
   const input = document.getElementById('msgInput');
-  const text  = input.value.trim();
+  const text = input.value.trim();
 
   if (!text || text.length > 500) return;
 
@@ -662,9 +665,13 @@ function sendMessage() {
 
   const email = guestSession ? '' : currentEmail;
 
+  // NEW: save badgeIds into Firestore permanently
+  const badgeIds = getBadgesForEmail(email).map(b => b.cls);
+
   db.collection('messages').add({
     username,
     email,
+    badgeIds,
     text,
     color: userColor,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
