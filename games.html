@@ -462,6 +462,37 @@ footer b { color: #FF2D8A66; }
 ============================================================ -->
 <footer><b>PINKGAME</b> &nbsp;—&nbsp; All games free to play &nbsp;—&nbsp; <b><a href="otherwebsites.html">OTHER WEBSITES</a></b></footer>
 
+<!-- Firebase Analytics bootstrap: initializes safely and exposes window.fbLog() -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+  import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3jxwyH9Pws4nhIT9ScDffk5CpHa99oMM",
+    authDomain: "pinkgame-1d4bf.firebaseapp.com",
+    projectId: "pinkgame-1d4bf",
+    storageBucket: "pinkgame-1d4bf.firebasestorage.app",
+    messagingSenderId: "531941128309",
+    appId: "1:531941128309:web:82e55394c6f48666a3603c",
+    measurementId: "G-WF5YT7S04W"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
+    window.fbLog = (name, params = {}) => {
+      try {
+        logEvent(analytics, name, params);
+      } catch (e) {
+        // Keep the site functional even if Analytics is blocked.
+      }
+    };
+  } catch (e) {
+    window.fbLog = () => {};
+  }
+</script>
+
 <script>
 /* ============================================================
    GAMES LIST — add, remove, or edit games here.
@@ -591,6 +622,11 @@ function setCategory(btn, cat) {
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentCat = cat;
+
+  window.fbLog?.('filter_category', {
+    category: cat
+  });
+
   renderGrid();
 }
 
@@ -598,6 +634,11 @@ function setCategory(btn, cat) {
    You don't need to edit this. */
 function filterGames() {
   searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+  window.fbLog?.('site_search', {
+    query_length: searchTerm.length
+  });
+
   renderGrid();
 }
 
@@ -657,6 +698,13 @@ function renderGrid() {
 function openGame(id) {
   const g = games.find(x => x.id === id);
   if (!g) return;
+
+  window.fbLog?.('game_open', {
+    game_id: g.id,
+    game_name: g.name,
+    game_category: g.cat
+  });
+
   window.open(g.url, '_blank');
 }
 
