@@ -435,6 +435,7 @@ const googleProvider = new firebase.auth.GoogleAuthProvider();
 const githubProvider = new firebase.auth.GithubAuthProvider();
 
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+githubProvider.addScope('read:user');
 githubProvider.addScope('user:email');
 
 // Save login across refreshes/reopens.
@@ -450,46 +451,127 @@ const COLORS = [
   '#818cf8','#e879f9','#f43f5e','#84cc16','#fb923c',
 ];
 
+// Badge rules
+const OWNER_EMAILS = new Set([
+  'kgames25922@gmail.com',
+  'schoolflashcardsgh@gmail.com',
+]);
+
+const SFC_EMAILS = new Set([
+  'cheesyboiw3@gmail.com',
+  'schoolflashcardsgh@gmail.com',
+  'cheesefunnel23@gmail.com',
+]);
+
+const SFC_GITHUB_USERS = new Set([
+  'tiny_nny',
+]);
+
 let username = null;
 let userColor = null;
 let currentEmail = '';
+let currentGithubLogin = '';
+let currentBadgeIds = [];
 let unsubscribe = null;
 let warningAccepted = false;
 let guestSession = false;
 
-// ── BADGES ──────────────────────────────────────────────────
+// ── HELPERS ──────────────────────────────────────────────────
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
-function getBadgesForEmail(email) {
-  const e = normalizeEmail(email);
-  const badges = [];
-
-  if (e === 'kgames25922@gmail.com' || e === 'schoolflashcardsgh@gmail.com') {
-    badges.push({ label: 'OWNER', cls: 'owner' });
-  }
-  if (e === 'cheesyboiw3@gmail.com' || e === 'schoolflashcardsgh@gmail.com') {
-    badges.push({ label: 'SFC', cls: 'sfc' });
-  }
-
-  return badges;
+function normalizeGithubLogin(login) {
+  return String(login || '').trim().toLowerCase().toLowerCase();
 }
 
-function badgesToHTML(email) {
-  return getBadgesForEmail(email)
-    .map(b => `<span class="chat-badge ${b.cls}">${b.label}</span>`)
-    .join('');
+function computeBadgeIds({ email = '', githubLogin = '' } = {}) {
+  const ids = [];
+  const e = normalizeEmail(email);
+  const gh = normalizeGithubLogin(githubLogin);
+
+  if (OWNER_EMAILS.has(e)) ids.push('owner');
+  if (SFC_EMAILS.has(e) || SFC_GITHUB_USERS.has(gh)) ids.push('sfc');
+
+  return ids;
 }
 
 function badgeIdsToHTML(badgeIds) {
-  if (!Array.isArray(badgeIds)) return '';
+  if (!Array.isArray(badgeIds) || badgeIds.length === 0) return '';
 
   return badgeIds.map(id => {
     if (id === 'owner') return `<span class="chat-badge owner">OWNER</span>`;
     if (id === 'sfc') return `<span class="chat-badge sfc">SFC</span>`;
     return '';
   }).join('');
+}
+
+function badgesToHTML(email, githubLogin = '') {
+  return badgeIdsToHTML(computeBadgeIds({ email, githubLogin }));
+}
+
+async function persistProfile(user, extra = {}) {
+  if (!user || !user.uid) return;
+
+  const email = normalizeEmail(extra.email || user.email || user.providerData?.[0]?.email || '');
+  const githubLogin = normalizeGithubLogin(extra.githubLogin || '');
+  const badgeIds = computeBadgeIds({ email, githubLogin });
+
+  currentEmail = email;
+  currentGithubLogin = githubLogin;
+  currentBadgeIds = badgeIds;
+
+  try {
+    await db.collection('profiles').doc(user.uid).set({
+      uid: user.uid,
+      email,
+      githubLogin,
+      displayName: user.displayName || '',
+      providerId: extra.providerId || user.providerData?.[0]?.providerId || '',
+      badgeIds,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    console.error('Profile save error:', err);
+  }
+}
+
+async function loadProfile(user) {
+  const fallbackEmail = normalizeEmail(user?.email || user?.providerData?.[0]?.email || '');
+  let profile = {};
+
+  try {
+    const snap = await db.collection('profiles').doc(user.uid).get();
+    if (snap.exists) profile = snap.data() || {};
+  } catch (err) {
+    console.error('Profile load error:', err);
+  }
+
+  const email = normalizeEmail(profile.email || fallbackEmail);
+  const githubLogin = normalizeGithubLogin(profile.githubLogin || '');
+  const badgeIds = Array.isArray(profile.badgeIds) && profile.badgeIds.length
+    ? profile.badgeIds
+    : computeBadgeIds({ email, githubLogin });
+
+  currentEmail = email;
+  currentGithubLogin = githubLogin;
+  currentBadgeIds = badgeIds;
+
+  username = user.displayName || profile.displayName || (email ? email.split('@')[0] : githubLogin || 'User');
+  userColor = profile.color || COLORS[Math.floor(Math.random() * COLORS.length)];
+}
+
+async function fetchGitHubLoginFromToken(token) {
+  if (!token) return '';
+  const resp = await fetch('https://api.github.com/user', {
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!resp.ok) return '';
+  const data = await resp.json();
+  return normalizeGithubLogin(data.login || '');
 }
 
 // ── WARNING ─────────────────────────────────────────────────
@@ -508,21 +590,10 @@ function acceptWarning() {
 }
 
 // ── AUTH / LOGIN ─────────────────────────────────────────────
-function setAuthUser(user) {
-  guestSession = false;
-  currentEmail = normalizeEmail(user.email || user.providerData?.[0]?.email || '');
-
-  username = user.displayName || (currentEmail ? currentEmail.split('@')[0] : 'User');
-  userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-
-  showChatUI();
-  if (warningAccepted) startListening();
-}
-
 function showChatUI() {
   document.getElementById('usernameModal').classList.remove('open');
   document.getElementById('displayName').textContent = username || '—';
-  document.getElementById('displayBadges').innerHTML = badgesToHTML(currentEmail);
+  document.getElementById('displayBadges').innerHTML = badgeIdsToHTML(currentBadgeIds);
 
   document.getElementById('userBtn').style.display = '';
   document.getElementById('msgInput').disabled = false;
@@ -530,22 +601,49 @@ function showChatUI() {
   document.getElementById('msgInput').focus();
 }
 
-function signInGoogle() {
-  authPersistenceReady.then(() => auth.signInWithPopup(googleProvider))
-    .then(res => setAuthUser(res.user))
-    .catch(err => {
-      console.error('Google sign-in error:', err);
-      alert('Google sign-in failed.');
+async function signInGoogle() {
+  try {
+    await authPersistenceReady;
+    const res = await auth.signInWithPopup(googleProvider);
+    await persistProfile(res.user, {
+      providerId: 'google.com',
+      email: res.user?.email || '',
+      githubLogin: '',
     });
+
+    if (warningAccepted) {
+      showChatUI();
+      startListening();
+    }
+  } catch (err) {
+    console.error('Google sign-in error:', err);
+    alert('Google sign-in failed.');
+  }
 }
 
-function signInGithub() {
-  authPersistenceReady.then(() => auth.signInWithPopup(githubProvider))
-    .then(res => setAuthUser(res.user))
-    .catch(err => {
-      console.error('GitHub sign-in error:', err);
-      alert('GitHub sign-in failed.');
+async function signInGithub() {
+  try {
+    await authPersistenceReady;
+    const res = await auth.signInWithPopup(githubProvider);
+
+    const credential = firebase.auth.GithubAuthProvider.credentialFromResult(res);
+    const accessToken = credential?.accessToken || '';
+    const githubLogin = await fetchGitHubLoginFromToken(accessToken);
+
+    await persistProfile(res.user, {
+      providerId: 'github.com',
+      email: res.user?.email || '',
+      githubLogin
     });
+
+    if (warningAccepted) {
+      showChatUI();
+      startListening();
+    }
+  } catch (err) {
+    console.error('GitHub sign-in error:', err);
+    alert('GitHub sign-in failed.');
+  }
 }
 
 function guestMode() {
@@ -555,6 +653,8 @@ function guestMode() {
 
   guestSession = true;
   currentEmail = '';
+  currentGithubLogin = '';
+  currentBadgeIds = [];
   username = val.slice(0, 20);
   userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
 
@@ -566,6 +666,8 @@ function signOutUser() {
   auth.signOut().catch(() => {});
   guestSession = false;
   currentEmail = '';
+  currentGithubLogin = '';
+  currentBadgeIds = [];
   username = null;
   userColor = null;
 
@@ -580,8 +682,16 @@ function signOutUser() {
 }
 
 // Restore saved login automatically.
-auth.onAuthStateChanged((user) => {
-  if (user) setAuthUser(user);
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return;
+
+  await loadProfile(user);
+
+  // Keep the warning gate in place.
+  if (warningAccepted) {
+    showChatUI();
+    startListening();
+  }
 });
 
 // ── REAL-TIME LISTENER ───────────────────────────────────────
@@ -626,10 +736,9 @@ function appendMessage(data) {
   const color = data.color || '#FF2D8A';
   const avatarBg = color + '22';
 
-  // NEW: badgeIds stored in Firestore (works on all devices)
   const badgeHTML = (Array.isArray(data.badgeIds) && data.badgeIds.length)
     ? badgeIdsToHTML(data.badgeIds)
-    : badgesToHTML(data.email || '');
+    : badgesToHTML(data.email || '', data.githubLogin || '');
 
   el.className = 'msg';
   el.innerHTML = `
@@ -656,7 +765,6 @@ function sendMessage() {
 
   const input = document.getElementById('msgInput');
   const text = input.value.trim();
-
   if (!text || text.length > 500) return;
 
   input.value = '';
@@ -664,13 +772,13 @@ function sendMessage() {
   document.getElementById('sendBtn').disabled = true;
 
   const email = guestSession ? '' : currentEmail;
-
-  // NEW: save badgeIds into Firestore permanently
-  const badgeIds = getBadgesForEmail(email).map(b => b.cls);
+  const githubLogin = guestSession ? '' : currentGithubLogin;
+  const badgeIds = guestSession ? [] : computeBadgeIds({ email, githubLogin });
 
   db.collection('messages').add({
     username,
     email,
+    githubLogin,
     badgeIds,
     text,
     color: userColor,
