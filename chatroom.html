@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chat — PinkGame</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+<style>
+:root {
+  --pink:  #FF2D8A;
+  --glow:  #FF2D8A88;
+  --dark:  #0a0a0a;
+  --card:  #111;
+  --text:  #ccc;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  background: var(--dark);
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(#FF2D8A09 1px, transparent 1px),
+    linear-gradient(90deg, #FF2D8A09 1px, transparent 1px);
+  background-size:44px 44px; pointer-events:none; z-index:0;
+}
+
+/* ── WARNING MODAL ─────────────────────────────────────────── */
+#warningModal {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: #000000ee;
+  backdrop-filter: blur(8px);
+}
+.warn-box {
+  background: #111; border: 1px solid #FF2D8A44;
+  border-radius: 12px; padding: 40px 36px;
+  width: 95%; max-width: 460px;
+  box-shadow: 0 0 60px #FF2D8A22;
+  display: flex; flex-direction: column; gap: 20px;
+  animation: popIn .25s ease;
+}
+@keyframes popIn {
+  from { transform: scale(.92) translateY(10px); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.warn-icon {
+  font-size: 2.2rem;
+  text-align: center;
+}
+.warn-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900; font-size: 1rem;
+  color: #fff; letter-spacing: 2px;
+  text-align: center;
+  text-shadow: 0 0 20px #FF2D8A66;
+}
+.warn-body {
+  font-size: 0.88rem; font-weight: 500;
+  line-height: 1.7; color: #555;
+  text-align: center;
+}
+.warn-body b { color: #888; }
+.warn-btn {
+  background: var(--pink); border: none; border-radius: 6px;
+  color: #fff; font-family: 'Orbitron', monospace;
+  font-weight: 700; font-size: 0.78rem; letter-spacing: 2px;
+  padding: 13px; cursor: pointer;
+  transition: box-shadow .2s;
+}
+.warn-btn:hover { box-shadow: 0 0 20px var(--glow); }
+.warn-deny {
+  background: none; border: none;
+  color: #2a2a2a; font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem; letter-spacing: 1px; text-align: center;
+  cursor: pointer; padding: 4px;
+  transition: color .15s;
+}
+.warn-deny:hover { color: #555; }
+
+/* ── USERNAME MODAL ── */
+#usernameModal {
+  position: fixed; inset: 0; z-index: 190;
+  display: none; align-items: center; justify-content: center;
+  background: #000000cc;
+  backdrop-filter: blur(6px);
+}
+#usernameModal.open { display: flex; }
+.uname-box {
+  background: #111; border: 1px solid #FF2D8A33;
+  border-radius: 10px; padding: 32px 28px;
+  width: 95%; max-width: 380px;
+  display: flex; flex-direction: column; gap: 16px;
+  animation: popIn .22s ease;
+}
+.uname-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 2px; color: var(--pink);
+  text-transform: uppercase;
+}
+.uname-input {
+  background: #0d0d0d; border: 1px solid #222; border-radius: 5px;
+  padding: 10px 14px; color: #ddd;
+  font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+  font-weight: 600; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.uname-input:focus { border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A18; }
+.uname-sub { font-size: 0.78rem; color: #333; letter-spacing: .5px; }
+.uname-btn {
+  background: var(--pink); border: none; border-radius: 5px;
+  color: #fff; font-family: 'Orbitron', monospace; font-weight: 700;
+  font-size: 0.72rem; letter-spacing: 2px; padding: 11px;
+  cursor: pointer; transition: box-shadow .2s;
+}
+.uname-btn:hover { box-shadow: 0 0 16px var(--glow); }
+
+/* OAuth buttons */
+.oauth-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+.oauth-btn {
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 11px;
+  color: #ddd;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.oauth-btn:hover {
+  border-color: var(--pink);
+  box-shadow: 0 0 16px #FF2D8A22;
+}
+.oauth-btn span {
+  color: var(--pink);
+}
+
+/* ── HEADER ── */
+header {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 24px; height: 58px;
+  background: #0a0a0af0; border-bottom: 1px solid #FF2D8A22;
+  backdrop-filter: blur(12px); flex-shrink: 0;
+}
+.logo {
+  font-family: 'Orbitron', monospace; font-weight: 900;
+  font-size: 1.1rem; color: var(--pink); letter-spacing: 3px;
+  text-shadow: 0 0 20px var(--glow); text-decoration: none;
+}
+.hdr-div { width:1px; height:24px; background:#222; }
+.chat-title {
+  font-family: 'Orbitron', monospace; font-size: 0.65rem;
+  letter-spacing: 3px; color: #333; text-transform: uppercase;
+}
+.online-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: #0f0f0f; border: 1px solid #1e1e1e;
+  border-radius: 50px; padding: 4px 12px;
+  font-size: 0.72rem; font-weight: 600; color: #333;
+  letter-spacing: .5px; margin-left: auto;
+}
+.online-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--pink); box-shadow: 0 0 6px var(--glow);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; } 50% { opacity:.4; }
+}
+.user-btn {
+  background: #141414; border: 1px solid #222; border-radius: 4px;
+  color: #555; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+  font-size: 0.78rem; letter-spacing: 1px; padding: 5px 12px;
+  cursor: pointer; transition: all .15s;
+}
+.user-btn:hover { border-color: var(--pink); color: var(--pink); }
+.user-btn span { color: var(--pink); }
+
+/* ── MESSAGES AREA ── */
+#messages {
+  flex: 1; overflow-y: auto;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 2px;
+  position: relative; z-index: 5;
+}
+.chat-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1; gap: 10px;
+  color: #1e1e1e; font-size: 0.85rem; letter-spacing: 1px;
+  text-transform: uppercase; text-align: center;
+}
+.chat-empty-icon { font-size: 2rem; opacity: .3; }
+
+.msg {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 10px; border-radius: 6px;
+  transition: background .15s;
+  animation: msgIn .2s ease;
+}
+@keyframes msgIn {
+  from { opacity:0; transform: translateY(6px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.msg:hover { background: #ffffff04; }
+
+.msg-avatar {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', monospace; font-weight: 900;
+  font-size: 0.65rem; flex-shrink: 0; margin-top: 1px;
+}
+.msg-right { flex: 1; min-width: 0; }
+.msg-meta {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px;
+}
+.msg-username {
+  font-weight: 700; font-size: 0.85rem;
+  letter-spacing: .3px;
+}
+.msg-time {
+  font-size: 0.68rem; color: #2a2a2a; font-weight: 500;
+}
+.msg-text {
+  font-size: 0.92rem; font-weight: 500;
+  color: #aaa; line-height: 1.5; word-break: break-word;
+}
+
+/* ── INPUT BAR ── */
+.input-bar {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 24px; flex-shrink: 0;
+  background: #0a0a0a; border-top: 1px solid #141414;
+}
+#msgInput {
+  flex: 1; background: #111; border: 1px solid #1e1e1e;
+  border-radius: 6px; padding: 11px 16px;
+  color: #ddd; font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem; font-weight: 500; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  resize: none;
+}
+#msgInput:focus { border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A15; }
+#msgInput::placeholder { color: #2a2a2a; }
+#msgInput:disabled { opacity: .4; cursor: not-allowed; }
+.send-btn {
+  background: var(--pink); border: none; border-radius: 6px;
+  color: #fff; width: 42px; height: 42px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: box-shadow .2s, opacity .2s;
+  font-size: 1rem;
+}
+.send-btn:hover { box-shadow: 0 0 16px var(--glow); }
+.send-btn:disabled { opacity: .4; cursor: not-allowed; }
+.char-count {
+  font-size: 0.7rem; color: #2a2a2a; min-width: 36px;
+  text-align: right; letter-spacing: .5px;
+  transition: color .2s;
+}
+.char-count.warn { color: #ff8c00; }
+.char-count.over { color: #ff3b3b; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #FF2D8A33; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pink); }
+</style>
+</head>
+
+<body>
+
+<!-- WARNING MODAL -->
+<div id="warningModal">
+  <div class="warn-box">
+    <div class="warn-icon">⚠️</div>
+    <div class="warn-title">Before You Enter</div>
+    <div class="warn-body">
+      This is a <b>public chatroom</b>. Anything you send is visible to everyone. This is not filtered.<br><br>
+      By clicking OK you agree that when you enter nothing is censored.
+    </div>
+    <button class="warn-btn" onclick="acceptWarning()">OK, I Understand</button>
+    <button class="warn-deny" onclick="window.location.href='games.html'">Take me back</button>
+  </div>
+</div>
+
+<!-- SIGN IN MODAL -->
+<div id="usernameModal">
+  <div class="uname-box">
+    <div class="uname-title">Sign In</div>
+
+    <div class="uname-sub">
+      Choose a provider. Your name will be shown in chat.
+    </div>
+
+    <div class="oauth-row">
+      <button class="oauth-btn" onclick="signInGoogle()">
+        Continue with <span>Google</span>
+      </button>
+
+      <button class="oauth-btn" onclick="signInGithub()">
+        Continue with <span>GitHub</span>
+      </button>
+
+      <button class="oauth-btn" onclick="guestMode()">
+        Continue as <span>Guest</span>
+      </button>
+    </div>
+
+    <div class="uname-sub" style="margin-top:6px;">
+      Guest mode is anonymous and can be changed later.
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="games.html">PINKGAME</a>
+  <div class="hdr-div"></div>
+  <span class="chat-title">// Global Chat</span>
+  <div class="online-pill">
+    <div class="online-dot"></div>
+    <span>Live</span>
+  </div>
+  <button class="user-btn" id="userBtn" onclick="signOutUser()" style="display:none">
+    Signed in as <span id="displayName">—</span> (Sign out)
+  </button>
+</header>
+
+<!-- MESSAGES -->
+<div id="messages">
+  <div class="chat-empty" id="chatEmpty">
+    <div class="chat-empty-icon">💬</div>
+    <div>No messages yet — say something</div>
+  </div>
+</div>
+
+<!-- INPUT BAR -->
+<div class="input-bar">
+  <input id="msgInput" placeholder="Say something..." maxlength="500"
+         oninput="updateCharCount()" onkeydown="handleKey(event)" disabled/>
+  <span class="char-count" id="charCount">500</span>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled title="Send">➤</button>
+</div>
+
+<script>
+// ============================================================
+//  FIREBASE CONFIG
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyB2aNUDcXXlYlxBSjogWhbw78Z1lST0yyY",
+  authDomain: "pinkchat-79768.firebaseapp.com",
+  projectId: "pinkchat-79768",
+  storageBucket: "pinkchat-79768.firebasestorage.app",
+  messagingSenderId: "357103797518",
+  appId: "1:357103797518:web:fde9700fcdda894aae835f",
+  measurementId: "G-LDCQGYB0MX"
+};
+// ============================================================
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+const githubProvider = new firebase.auth.GithubAuthProvider();
+
+// ── USER COLORS — random color assigned to each username
+const COLORS = [
+  '#FF2D8A','#FF6B35','#FFB800','#22c55e','#06b6d4',
+  '#818cf8','#e879f9','#f43f5e','#84cc16','#fb923c',
+];
+
+let username    = null;
+let userColor   = null;
+let unsubscribe = null;
+
+// ── WARNING ──────────────────────────────────────────────────
+function acceptWarning() {
+  document.getElementById('warningModal').style.display = 'none';
+  document.getElementById('usernameModal').classList.add('open');
+}
+
+// ── SIGN IN FUNCTIONS ────────────────────────────────────────
+function signInGoogle() {
+  auth.signInWithPopup(googleProvider)
+    .then(res => afterSignIn(res.user))
+    .catch(err => {
+      console.error("Google sign-in error:", err);
+      alert("Google sign-in failed.");
+    });
+}
+
+function signInGithub() {
+  auth.signInWithPopup(githubProvider)
+    .then(res => afterSignIn(res.user))
+    .catch(err => {
+      console.error("GitHub sign-in error:", err);
+      alert("GitHub sign-in failed.");
+    });
+}
+
+function guestMode() {
+  // no firebase auth, just random name
+  username = "Guest" + Math.floor(Math.random() * 9999);
+  userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+  finishLoginUI();
+  startListening();
+}
+
+function afterSignIn(user) {
+  username = user.displayName || user.email?.split('@')[0] || "User";
+  userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+  finishLoginUI();
+  startListening();
+}
+
+function finishLoginUI() {
+  document.getElementById('usernameModal').classList.remove('open');
+  document.getElementById('displayName').textContent = username;
+  document.getElementById('userBtn').style.display = '';
+
+  document.getElementById('msgInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('msgInput').focus();
+}
+
+function signOutUser() {
+  auth.signOut().catch(() => {});
+  username = null;
+
+  document.getElementById('displayName').textContent = "—";
+  document.getElementById('userBtn').style.display = 'none';
+
+  document.getElementById('msgInput').disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  document.getElementById('usernameModal').classList.add('open');
+}
+
+// Auto login if already signed in
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    afterSignIn(user);
+  }
+});
+
+// ── REAL-TIME LISTENER ───────────────────────────────────────
+function startListening() {
+  if (unsubscribe) unsubscribe();
+
+  const container = document.getElementById('messages');
+  container.innerHTML = `
+    <div class="chat-empty" id="chatEmpty">
+      <div class="chat-empty-icon">💬</div>
+      <div>No messages yet — say something</div>
+    </div>
+  `;
+
+  unsubscribe = db.collection('messages')
+    .orderBy('timestamp', 'asc')
+    .limitToLast(80)
+    .onSnapshot(snap => {
+      const chatEmpty = document.getElementById('chatEmpty');
+      if (chatEmpty) chatEmpty.style.display = 'none';
+
+      container.querySelectorAll('.msg').forEach(el => el.remove());
+
+      snap.forEach(doc => appendMessage(doc.data()));
+    }, err => {
+      console.error('Firestore error:', err);
+    });
+}
+
+// ── RENDER MESSAGE ───────────────────────────────────────────
+function appendMessage(data) {
+  const container = document.getElementById('messages');
+  const chatEmpty = document.getElementById('chatEmpty');
+  if (chatEmpty) chatEmpty.style.display = 'none';
+
+  const el = document.createElement('div');
+
+  const time = data.timestamp?.toDate
+    ? data.timestamp.toDate().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })
+    : '';
+
+  const initials = (data.username || '?').slice(0, 2).toUpperCase();
+  const color    = data.color || '#FF2D8A';
+  const avatarBg = color + '22';
+
+  el.className = 'msg';
+  el.innerHTML = `
+    <div class="msg-avatar" style="background:${avatarBg}; color:${color}; border:1px solid ${color}33">
+      ${escHtml(initials)}
+    </div>
+    <div class="msg-right">
+      <div class="msg-meta">
+        <span class="msg-username" style="color:${color}">${escHtml(data.username || '?')}</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="msg-text">${escHtml(data.text || '')}</div>
+    </div>
+  `;
+
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── SEND MESSAGE ─────────────────────────────────────────────
+function sendMessage() {
+  if (!username) return;
+
+  const input = document.getElementById('msgInput');
+  const text  = input.value.trim();
+
+  if (!text || text.length > 500) return;
+
+  input.value = '';
+  updateCharCount();
+  document.getElementById('sendBtn').disabled = true;
+
+  db.collection('messages').add({
+    username,
+    text,
+    color: userColor,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+  }).then(() => {
+    document.getElementById('sendBtn').disabled = false;
+    input.focus();
+  }).catch(err => {
+    console.error('Send error:', err);
+    document.getElementById('sendBtn').disabled = false;
+  });
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function updateCharCount() {
+  const len = document.getElementById('msgInput').value.length;
+  const el  = document.getElementById('charCount');
+
+  el.textContent = 500 - len;
+  el.className = len >= 500 ? 'char-count over' : len >= 450 ? 'char-count warn' : 'char-count';
+}
+
+// Prevent XSS
+function escHtml(str) {
+  str = String(str ?? '');
+  return str.replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>
