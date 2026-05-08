@@ -18,6 +18,10 @@
   --dark:  #0a0a0a;
   --card:  #111;
   --text:  #ccc;
+  --owner: #ff9800;
+  --ownerGlow: #ff980055;
+  --sfc:   #ff2d8a;
+  --sfcGlow: #ff2d8a55;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100%; }
@@ -57,10 +61,7 @@ body::before {
   from { transform: scale(.92) translateY(10px); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
 }
-.warn-icon {
-  font-size: 2.2rem;
-  text-align: center;
-}
+.warn-icon { font-size: 2.2rem; text-align: center; }
 .warn-title {
   font-family: 'Orbitron', monospace;
   font-weight: 900; font-size: 1rem;
@@ -91,7 +92,7 @@ body::before {
 }
 .warn-deny:hover { color: #555; }
 
-/* ── USERNAME MODAL ── */
+/* ── SIGN IN MODAL ── */
 #usernameModal {
   position: fixed; inset: 0; z-index: 190;
   display: none; align-items: center; justify-content: center;
@@ -112,34 +113,15 @@ body::before {
   letter-spacing: 2px; color: var(--pink);
   text-transform: uppercase;
 }
-.uname-input {
-  background: #0d0d0d; border: 1px solid #222; border-radius: 5px;
-  padding: 10px 14px; color: #ddd;
-  font-family: 'Rajdhani', sans-serif; font-size: 1rem;
-  font-weight: 600; outline: none;
-  transition: border-color .2s, box-shadow .2s;
-}
-.uname-input:focus { border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A18; }
 .uname-sub { font-size: 0.78rem; color: #333; letter-spacing: .5px; }
-.uname-btn {
-  background: var(--pink); border: none; border-radius: 5px;
-  color: #fff; font-family: 'Orbitron', monospace; font-weight: 700;
-  font-size: 0.72rem; letter-spacing: 2px; padding: 11px;
-  cursor: pointer; transition: box-shadow .2s;
-}
-.uname-btn:hover { box-shadow: 0 0 16px var(--glow); }
 
-/* OAuth buttons */
 .oauth-row {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 6px;
 }
 .oauth-btn {
-  background: #0d0d0d;
-  border: 1px solid #222;
-  border-radius: 6px;
+  background: #0d0d0d; border: 1px solid #222; border-radius: 6px;
   padding: 11px;
   color: #ddd;
   font-family: 'Orbitron', monospace;
@@ -152,9 +134,30 @@ body::before {
   border-color: var(--pink);
   box-shadow: 0 0 16px #FF2D8A22;
 }
-.oauth-btn span {
-  color: var(--pink);
+.oauth-btn span { color: var(--pink); }
+
+.guest-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
+.uname-input {
+  flex: 1;
+  background: #0d0d0d; border: 1px solid #222; border-radius: 5px;
+  padding: 10px 14px; color: #ddd;
+  font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+  font-weight: 600; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.uname-input:focus { border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A18; }
+.uname-btn {
+  background: var(--pink); border: none; border-radius: 5px;
+  color: #fff; font-family: 'Orbitron', monospace; font-weight: 700;
+  font-size: 0.72rem; letter-spacing: 2px; padding: 11px 14px;
+  cursor: pointer; transition: box-shadow .2s;
+  white-space: nowrap;
+}
+.uname-btn:hover { box-shadow: 0 0 16px var(--glow); }
 
 /* ── HEADER ── */
 header {
@@ -194,9 +197,47 @@ header {
   color: #555; font-family: 'Rajdhani', sans-serif; font-weight: 600;
   font-size: 0.78rem; letter-spacing: 1px; padding: 5px 12px;
   cursor: pointer; transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .user-btn:hover { border-color: var(--pink); color: var(--pink); }
 .user-btn span { color: var(--pink); }
+
+/* ── BADGES ── */
+.display-badges,
+.msg-badges {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.chat-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 0.58rem;
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  transform: translateY(-1px);
+}
+.chat-badge.owner {
+  background: rgba(255, 152, 0, 0.12);
+  color: #ffad42;
+  border-color: rgba(255, 152, 0, 0.45);
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.10);
+}
+.chat-badge.sfc {
+  background: rgba(255, 45, 138, 0.12);
+  color: #ff72b0;
+  border-color: rgba(255, 45, 138, 0.45);
+  box-shadow: 0 0 10px rgba(255, 45, 138, 0.10);
+}
 
 /* ── MESSAGES AREA ── */
 #messages {
@@ -233,7 +274,8 @@ header {
 }
 .msg-right { flex: 1; min-width: 0; }
 .msg-meta {
-  display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+  flex-wrap: wrap;
 }
 .msg-username {
   font-weight: 700; font-size: 0.85rem;
@@ -309,7 +351,6 @@ header {
 <div id="usernameModal">
   <div class="uname-box">
     <div class="uname-title">Sign In</div>
-
     <div class="uname-sub">
       Choose a provider. Your name will be shown in chat.
     </div>
@@ -322,14 +363,19 @@ header {
       <button class="oauth-btn" onclick="signInGithub()">
         Continue with <span>GitHub</span>
       </button>
-
-      <button class="oauth-btn" onclick="guestMode()">
-        Continue as <span>Guest</span>
-      </button>
     </div>
 
-    <div class="uname-sub" style="margin-top:6px;">
-      Guest mode is anonymous and can be changed later.
+    <div class="uname-sub" style="margin-top:4px;">
+      Your login will stay saved on this device unless you sign out.
+    </div>
+
+    <div class="guest-row" style="margin-top:4px;">
+      <input class="uname-input" id="guestNameInput" maxlength="20" placeholder="Guest name"/>
+      <button class="uname-btn" onclick="guestMode()">Use Guest</button>
+    </div>
+
+    <div class="uname-sub">
+      Guest mode is anonymous and local to this device.
     </div>
   </div>
 </div>
@@ -344,7 +390,9 @@ header {
     <span>Live</span>
   </div>
   <button class="user-btn" id="userBtn" onclick="signOutUser()" style="display:none">
-    Signed in as <span id="displayName">—</span> (Sign out)
+    Signed in as <span id="displayName">—</span>
+    <span id="displayBadges" class="display-badges"></span>
+    <span style="color:#555">• Sign out</span>
   </button>
 </header>
 
@@ -387,83 +435,152 @@ const auth = firebase.auth();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 const githubProvider = new firebase.auth.GithubAuthProvider();
 
-// ── USER COLORS — random color assigned to each username
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+githubProvider.addScope('user:email');
+
+// Save login on this device across refreshes/reopens.
+const authPersistenceReady = auth
+  .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .catch(err => {
+    console.error('Auth persistence error:', err);
+  });
+
+// ── USER COLORS ──────────────────────────────────────────────
 const COLORS = [
   '#FF2D8A','#FF6B35','#FFB800','#22c55e','#06b6d4',
   '#818cf8','#e879f9','#f43f5e','#84cc16','#fb923c',
 ];
 
-let username    = null;
-let userColor   = null;
+let username = null;
+let userColor = null;
+let currentEmail = '';
 let unsubscribe = null;
+let warningAccepted = false;
+let guestSession = false;
 
-// ── WARNING ──────────────────────────────────────────────────
+// ── BADGES ──────────────────────────────────────────────────
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function getBadgesForEmail(email) {
+  const e = normalizeEmail(email);
+  const badges = [];
+
+  if (e === 'kgames25922@gmail.com' || e === 'schoolflashcardsgh@gmail.com') {
+    badges.push({ label: 'OWNER', cls: 'owner' });
+  }
+  if (e === 'cheesyboiw3@gmail.com' || e === 'schoolflashcardsgh@gmail.com') {
+    badges.push({ label: 'SFC', cls: 'sfc' });
+  }
+
+  return badges;
+}
+
+function badgesToHTML(email) {
+  return getBadgesForEmail(email)
+    .map(b => `<span class="chat-badge ${b.cls}">${b.label}</span>`)
+    .join('');
+}
+
+// ── WARNING ─────────────────────────────────────────────────
 function acceptWarning() {
+  warningAccepted = true;
   document.getElementById('warningModal').style.display = 'none';
+
+  if (username) {
+    showChatUI();
+    return;
+  }
+
   document.getElementById('usernameModal').classList.add('open');
+  setTimeout(() => document.getElementById('guestNameInput').focus(), 100);
 }
 
-// ── SIGN IN FUNCTIONS ────────────────────────────────────────
-function signInGoogle() {
-  auth.signInWithPopup(googleProvider)
-    .then(res => afterSignIn(res.user))
-    .catch(err => {
-      console.error("Google sign-in error:", err);
-      alert("Google sign-in failed.");
-    });
-}
+// ── AUTH / LOGIN ─────────────────────────────────────────────
+function setAuthUser(user, providerName) {
+  guestSession = false;
+  currentEmail = normalizeEmail(user.email || user.providerData?.[0]?.email || '');
 
-function signInGithub() {
-  auth.signInWithPopup(githubProvider)
-    .then(res => afterSignIn(res.user))
-    .catch(err => {
-      console.error("GitHub sign-in error:", err);
-      alert("GitHub sign-in failed.");
-    });
-}
-
-function guestMode() {
-  // no firebase auth, just random name
-  username = "Guest" + Math.floor(Math.random() * 9999);
+  username = user.displayName || (currentEmail ? currentEmail.split('@')[0] : 'User');
   userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-  finishLoginUI();
-  startListening();
+
+  showChatUI();
+  if (warningAccepted) startListening();
 }
 
-function afterSignIn(user) {
-  username = user.displayName || user.email?.split('@')[0] || "User";
-  userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-  finishLoginUI();
-  startListening();
-}
-
-function finishLoginUI() {
+function showChatUI() {
   document.getElementById('usernameModal').classList.remove('open');
-  document.getElementById('displayName').textContent = username;
-  document.getElementById('userBtn').style.display = '';
+  document.getElementById('displayName').textContent = username || '—';
+  document.getElementById('displayBadges').innerHTML = badgesToHTML(currentEmail);
 
+  document.getElementById('userBtn').style.display = '';
   document.getElementById('msgInput').disabled = false;
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('msgInput').focus();
 }
 
+function signInGoogle() {
+  authPersistenceReady.then(() => {
+    return auth.signInWithPopup(googleProvider);
+  }).then(res => {
+    setAuthUser(res.user, 'google');
+    if (warningAccepted) startListening();
+  }).catch(err => {
+    console.error('Google sign-in error:', err);
+    alert('Google sign-in failed.');
+  });
+}
+
+function signInGithub() {
+  authPersistenceReady.then(() => {
+    return auth.signInWithPopup(githubProvider);
+  }).then(res => {
+    setAuthUser(res.user, 'github');
+    if (warningAccepted) startListening();
+  }).catch(err => {
+    console.error('GitHub sign-in error:', err);
+    alert('GitHub sign-in failed.');
+  });
+}
+
+function guestMode() {
+  const input = document.getElementById('guestNameInput');
+  const val = input.value.trim();
+
+  if (!val) return;
+
+  guestSession = true;
+  currentEmail = '';
+  username = val.slice(0, 20);
+  userColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+  showChatUI();
+  if (warningAccepted) startListening();
+}
+
 function signOutUser() {
   auth.signOut().catch(() => {});
+  guestSession = false;
+  currentEmail = '';
   username = null;
+  userColor = null;
 
-  document.getElementById('displayName').textContent = "—";
+  document.getElementById('displayName').textContent = '—';
+  document.getElementById('displayBadges').innerHTML = '';
   document.getElementById('userBtn').style.display = 'none';
 
   document.getElementById('msgInput').disabled = true;
   document.getElementById('sendBtn').disabled = true;
-
   document.getElementById('usernameModal').classList.add('open');
+  document.getElementById('guestNameInput').value = '';
 }
 
-// Auto login if already signed in
+// Restore saved login automatically.
 auth.onAuthStateChanged((user) => {
   if (user) {
-    afterSignIn(user);
+    setAuthUser(user, user.providerData?.[0]?.providerId || 'firebase');
+    if (warningAccepted) startListening();
   }
 });
 
@@ -509,6 +626,7 @@ function appendMessage(data) {
   const initials = (data.username || '?').slice(0, 2).toUpperCase();
   const color    = data.color || '#FF2D8A';
   const avatarBg = color + '22';
+  const badgesHTML = badgesToHTML(data.email || '');
 
   el.className = 'msg';
   el.innerHTML = `
@@ -518,6 +636,7 @@ function appendMessage(data) {
     <div class="msg-right">
       <div class="msg-meta">
         <span class="msg-username" style="color:${color}">${escHtml(data.username || '?')}</span>
+        <span class="msg-badges">${badgesHTML}</span>
         <span class="msg-time">${time}</span>
       </div>
       <div class="msg-text">${escHtml(data.text || '')}</div>
@@ -541,8 +660,11 @@ function sendMessage() {
   updateCharCount();
   document.getElementById('sendBtn').disabled = true;
 
+  const email = guestSession ? '' : currentEmail;
+
   db.collection('messages').add({
     username,
+    email,
     text,
     color: userColor,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
