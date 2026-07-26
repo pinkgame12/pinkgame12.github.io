@@ -182,6 +182,84 @@ main {
 }
 .thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
 
+/* ── INPUT + PICKER BUTTON ROWS (emoji / bg color / image search) ── */
+.input-with-btn { display: flex; gap: 8px; }
+.input-with-btn input[type="text"],
+.input-with-btn input[type="url"] { flex: 1; min-width: 0; }
+
+.picker-toggle-btn {
+  flex-shrink: 0; width: 42px;
+  background: #161616; border: 1px solid #222; border-radius: 5px;
+  font-size: 1.1rem; cursor: pointer; transition: border-color 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.picker-toggle-btn:hover { border-color: var(--pink); }
+.picker-toggle-btn.active { border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A18; }
+
+/* Native color swatch input, restyled to match the theme */
+.input-with-btn input[type="color"] {
+  flex-shrink: 0; width: 42px; height: 42px;
+  padding: 3px; background: #161616; border: 1px solid #222;
+  border-radius: 5px; cursor: pointer;
+}
+.input-with-btn input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.input-with-btn input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+
+/* Emoji picker popover */
+.emoji-picker {
+  display: none; margin-top: 8px; background: #161616;
+  border: 1px solid #222; border-radius: 6px; padding: 10px;
+}
+.emoji-picker.open { display: block; }
+.emoji-picker input {
+  width: 100%; background: #0f0f0f; border: 1px solid #222; color: #ddd;
+  font-family: 'Rajdhani', sans-serif; font-size: 0.85rem;
+  padding: 7px 10px; border-radius: 4px; outline: none; margin-bottom: 8px;
+}
+.emoji-picker input:focus { border-color: var(--pink); }
+.emoji-grid {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+  max-height: 180px; overflow-y: auto;
+}
+.emoji-grid button {
+  background: none; border: none; font-size: 1.25rem; padding: 6px 0;
+  border-radius: 4px; cursor: pointer; transition: background 0.1s;
+}
+.emoji-grid button:hover { background: #FF2D8A22; }
+.emoji-grid .no-results { grid-column: 1 / -1; color: #444; font-size: 0.8rem; text-align: center; padding: 10px 0; }
+
+/* Image search panel */
+.img-search-panel {
+  display: none; margin-top: 8px; background: #161616;
+  border: 1px solid #222; border-radius: 6px; padding: 10px;
+}
+.img-search-panel.open { display: block; }
+.img-search-bar { display: flex; gap: 8px; margin-bottom: 8px; }
+.img-search-bar input {
+  flex: 1; min-width: 0; background: #0f0f0f; border: 1px solid #222; color: #ddd;
+  font-family: 'Rajdhani', sans-serif; font-size: 0.85rem;
+  padding: 8px 10px; border-radius: 4px; outline: none;
+}
+.img-search-bar input:focus { border-color: var(--pink); }
+.btn-search {
+  flex-shrink: 0; background: var(--pink); border: none; color: #fff;
+  font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 0.8rem;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 0 16px; border-radius: 4px; cursor: pointer;
+}
+.img-search-note { color: #444; font-size: 0.72rem; line-height: 1.5; margin-bottom: 10px; }
+.img-search-results {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 6px; max-height: 260px; overflow-y: auto;
+}
+.img-result {
+  aspect-ratio: 1/1; border-radius: 4px; overflow: hidden; cursor: pointer;
+  border: 2px solid transparent; background: #0f0f0f;
+}
+.img-result:hover { border-color: var(--pink); }
+.img-result img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-search-status { grid-column: 1 / -1; color: #444; font-size: 0.8rem; text-align: center; padding: 14px 0; }
+
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
 .form-actions .btn-primary { width: auto; flex: 1; }
 .btn-cancel {
@@ -310,16 +388,41 @@ main {
 
         <div class="field span-2">
           <label>Thumbnail Image URL (leave blank to use the emoji instead)</label>
-          <input type="url" id="fImg" placeholder="https://..."/>
+          <div class="input-with-btn">
+            <input type="url" id="fImg" placeholder="https://..."/>
+            <button type="button" class="picker-toggle-btn" id="imgSearchToggle" title="Search for an image">🔍</button>
+          </div>
+          <div class="img-search-panel" id="imgSearchPanel">
+            <div class="img-search-bar">
+              <input type="text" id="imgSearchInput" placeholder="Search images… e.g. space rocket"/>
+              <button type="button" class="btn-search" id="imgSearchBtn">Search</button>
+            </div>
+            <div class="img-search-note">
+              Searches Wikimedia Commons (openly-licensed images) — great for general topics,
+              logos, and screenshots, but it won't have art for most commercial games.
+              You can still paste any direct image URL above.
+            </div>
+            <div class="img-search-results" id="imgSearchResults"></div>
+          </div>
         </div>
 
         <div class="field">
           <label>Emoji Fallback</label>
-          <input type="text" id="fEmoji" placeholder="🎮" maxlength="8"/>
+          <div class="input-with-btn">
+            <input type="text" id="fEmoji" placeholder="🎮" maxlength="8"/>
+            <button type="button" class="picker-toggle-btn" id="emojiToggle" title="Pick an emoji">😀</button>
+          </div>
+          <div class="emoji-picker" id="emojiPicker">
+            <input type="text" id="emojiSearch" placeholder="Search emoji…"/>
+            <div class="emoji-grid" id="emojiGrid"></div>
+          </div>
         </div>
         <div class="field">
           <label>Background Color</label>
-          <input type="text" id="fBg" placeholder="#111111" value="#111111"/>
+          <div class="input-with-btn">
+            <input type="text" id="fBg" placeholder="#111111" value="#111111"/>
+            <input type="color" id="fBgColor" value="#111111" title="Pick a color"/>
+          </div>
         </div>
 
         <div class="field span-2">
@@ -445,6 +548,7 @@ main {
   const fImg = document.getElementById('fImg');
   const fEmoji = document.getElementById('fEmoji');
   const fBg = document.getElementById('fBg');
+  const fBgColor = document.getElementById('fBgColor');
   const fNew = document.getElementById('fNew');
   const fPop = document.getElementById('fPop');
   const fSfc = document.getElementById('fSfc');
@@ -465,15 +569,190 @@ main {
   fImg.addEventListener('input', updatePreview);
   fEmoji.addEventListener('input', updatePreview);
 
+  // ── BACKGROUND COLOR PICKER ───────────────────────────────
+  // The color swatch and the text field stay in sync either direction.
+  const hexPattern = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  fBgColor.addEventListener('input', () => {
+    fBg.value = fBgColor.value;
+  });
+  fBg.addEventListener('input', () => {
+    if (hexPattern.test(fBg.value.trim())) {
+      fBgColor.value = fBg.value.trim();
+    }
+  });
+
+  // ── EMOJI PICKER ───────────────────────────────────────────
+  // A small curated set — enough variety for game thumbnails without
+  // pulling in an external emoji library. Each entry has search keywords.
+  const EMOJI_DATA = [
+    ['🎮','game controller games'], ['🕹️','joystick arcade retro'], ['👾','alien invader retro pixel'],
+    ['🎯','target dart bullseye aim'], ['🎲','dice board game random'], ['🃏','card joker playing'],
+    ['♟️','chess strategy piece'], ['🧩','puzzle jigsaw piece'], ['🏆','trophy win champion'],
+    ['🥇','gold medal first win'], ['⚔️','swords fight battle combat'], ['🛡️','shield defense armor'],
+    ['🔫','gun shooter weapon'], ['💣','bomb explosive blast'], ['🧨','dynamite explosive fuse'],
+    ['💥','explosion impact boom'], ['🔥','fire flame hot'], ['⚡','lightning bolt electric energy'],
+    ['❄️','snowflake cold winter ice'], ['💧','water drop droplet'], ['🌊','wave ocean water sea'],
+    ['🚀','rocket space launch'], ['🛸','ufo alien spaceship'], ['🪐','planet saturn space'],
+    ['🌙','moon night crescent'], ['⭐','star favorite rating'], ['✨','sparkles shiny magic'],
+    ['🚗','car race drive vehicle'], ['🏎️','race car speed fast'], ['🏍️','motorcycle bike ride'],
+    ['🚲','bicycle bike pedal'], ['🛹','skateboard skate trick'], ['🛷','sled snow winter ride'],
+    ['✈️','airplane fly travel'], ['🚁','helicopter fly chopper'], ['🚚','truck delivery vehicle'],
+    ['⚽','soccer football ball sport'], ['🏈','american football sport'], ['🏀','basketball sport ball'],
+    ['⚾','baseball sport ball'], ['🎾','tennis sport ball'], ['🏐','volleyball sport ball'],
+    ['🏓','ping pong table tennis'], ['🥊','boxing glove fight'], ['🏹','bow arrow archery'],
+    ['🎣','fishing rod fish'], ['🏄','surfing wave board'], ['🏃','run runner sprint'],
+    ['🧗','climbing climb rock'], ['🦖','dinosaur rex prehistoric'], ['🦕','dinosaur long-neck prehistoric'],
+    ['🐍','snake slither reptile'], ['🐦','bird flappy fly'], ['🐺','wolf animal wild'],
+    ['🐻','bear animal fnaf'], ['🐱','cat animal pet'], ['🐶','dog animal pet'],
+    ['🐸','frog animal amphibian'], ['🐝','bee insect buzz'], ['🦋','butterfly insect fly'],
+    ['👽','alien ufo space green'], ['👻','ghost spooky halloween'], ['💀','skull death danger'],
+    ['🧟','zombie undead scary'], ['🧙','wizard mage magic'], ['🧛','vampire dracula scary'],
+    ['🤖','robot machine ai'], ['🥷','ninja stealth sneak'], ['🦸','hero super power'],
+    ['🍕','pizza food slice'], ['🍔','burger food fast'], ['🍪','cookie clicker food'],
+    ['🍬','candy sweet jump'], ['🍉','watermelon fruit ninja'], ['🍎','apple fruit red'],
+    ['☕','coffee drink cup'], ['🍩','donut sweet food'], ['🎂','cake birthday party'],
+    ['₿','bitcoin crypto currency'], ['💰','money bag gold cash'], ['💎','gem diamond jewel'],
+    ['🔑','key unlock access'], ['🔒','lock security padlock'], ['🧱','brick block wall'],
+    ['🏰','castle fortress medieval'], ['🏝️','island beach tropical'], ['🌋','volcano lava mountain'],
+    ['🗻','mountain peak snow'], ['🌆','city skyline urban'], ['🏟️','stadium arena sport'],
+    ['🔢','numbers 2048 math'], ['🔤','letters abc word'], ['🧮','abacus calculate math'],
+    ['📐','ruler triangle geometry'], ['🔷','diamond shape blue geometry'], ['🔺','triangle shape red'],
+    ['🎨','art paint palette'], ['🎵','music note song rhythm'], ['🎧','headphones audio music'],
+    ['📱','phone mobile app'], ['💻','laptop computer tech'], ['🖥️','desktop computer monitor'],
+  ];
+
+  const emojiToggle = document.getElementById('emojiToggle');
+  const emojiPicker = document.getElementById('emojiPicker');
+  const emojiSearch = document.getElementById('emojiSearch');
+  const emojiGrid = document.getElementById('emojiGrid');
+
+  function renderEmojiGrid(filter = '') {
+    const term = filter.trim().toLowerCase();
+    const matches = term
+      ? EMOJI_DATA.filter(([, keywords]) => keywords.includes(term))
+      : EMOJI_DATA;
+
+    if (matches.length === 0) {
+      emojiGrid.innerHTML = '<div class="no-results">No matches</div>';
+      return;
+    }
+    emojiGrid.innerHTML = matches.map(([emoji]) =>
+      `<button type="button" data-emoji="${emoji}">${emoji}</button>`
+    ).join('');
+    emojiGrid.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fEmoji.value = btn.dataset.emoji;
+        updatePreview();
+        closeEmojiPicker();
+      });
+    });
+  }
+
+  function openEmojiPicker() {
+    closeImgSearch();
+    emojiPicker.classList.add('open');
+    emojiToggle.classList.add('active');
+    emojiSearch.value = '';
+    renderEmojiGrid();
+    emojiSearch.focus();
+  }
+  function closeEmojiPicker() {
+    emojiPicker.classList.remove('open');
+    emojiToggle.classList.remove('active');
+  }
+  emojiToggle.addEventListener('click', () => {
+    emojiPicker.classList.contains('open') ? closeEmojiPicker() : openEmojiPicker();
+  });
+  emojiSearch.addEventListener('input', () => renderEmojiGrid(emojiSearch.value));
+
+  // ── IMAGE SEARCH (Wikimedia Commons — free, no API key needed) ───
+  // Not literally Google Images (that requires a paid API key, which
+  // can't be safely embedded in a page anyone can view the source of).
+  // This searches Wikimedia's openly-licensed image library instead —
+  // good for general topics/logos/screenshots, thinner on commercial
+  // game art. The manual URL field above still takes any direct link.
+  const imgSearchToggle = document.getElementById('imgSearchToggle');
+  const imgSearchPanel = document.getElementById('imgSearchPanel');
+  const imgSearchInput = document.getElementById('imgSearchInput');
+  const imgSearchBtn = document.getElementById('imgSearchBtn');
+  const imgSearchResults = document.getElementById('imgSearchResults');
+
+  function openImgSearch() {
+    closeEmojiPicker();
+    imgSearchPanel.classList.add('open');
+    imgSearchToggle.classList.add('active');
+    imgSearchInput.focus();
+  }
+  function closeImgSearch() {
+    imgSearchPanel.classList.remove('open');
+    imgSearchToggle.classList.remove('active');
+  }
+  imgSearchToggle.addEventListener('click', () => {
+    imgSearchPanel.classList.contains('open') ? closeImgSearch() : openImgSearch();
+  });
+
+  async function runImageSearch() {
+    const term = imgSearchInput.value.trim();
+    if (!term) return;
+    imgSearchResults.innerHTML = '<div class="img-search-status">Searching…</div>';
+    try {
+      const url = 'https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+        action: 'query', generator: 'search', gsrnamespace: '6',
+        gsrsearch: term, gsrlimit: '24', prop: 'imageinfo',
+        iiprop: 'url', iiurlwidth: '400', format: 'json', origin: '*'
+      });
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = data && data.query && data.query.pages ? Object.values(data.query.pages) : [];
+      const results = pages
+        .map(p => p.imageinfo && p.imageinfo[0])
+        .filter(info => info && (info.thumburl || info.url) && /\.(jpe?g|png|gif|webp)(\?|$)/i.test(info.thumburl || info.url));
+
+      if (results.length === 0) {
+        imgSearchResults.innerHTML = '<div class="img-search-status">No image results — try a different search.</div>';
+        return;
+      }
+
+      imgSearchResults.innerHTML = results.map((info, i) =>
+        `<div class="img-result" data-i="${i}"><img src="${escapeHtml(info.thumburl || info.url)}" loading="lazy"></div>`
+      ).join('');
+      imgSearchResults.querySelectorAll('.img-result').forEach(el => {
+        el.addEventListener('click', () => {
+          const info = results[Number(el.dataset.i)];
+          fImg.value = info.thumburl || info.url;
+          updatePreview();
+          closeImgSearch();
+        });
+      });
+    } catch (err) {
+      console.error(err);
+      imgSearchResults.innerHTML = '<div class="img-search-status">Search failed — check your connection.</div>';
+    }
+  }
+  imgSearchBtn.addEventListener('click', runImageSearch);
+  imgSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); runImageSearch(); }
+  });
+
+  // Close either popover when clicking outside of it
+  document.addEventListener('click', (e) => {
+    if (!emojiPicker.contains(e.target) && e.target !== emojiToggle) closeEmojiPicker();
+    if (!imgSearchPanel.contains(e.target) && e.target !== imgSearchToggle) closeImgSearch();
+  });
+
   function resetForm() {
     editingId = null;
     fName.value = ''; fUrl.value = ''; fCat.value = ''; fImg.value = '';
-    fEmoji.value = ''; fBg.value = '#111111';
+    fEmoji.value = ''; fBg.value = '#111111'; fBgColor.value = '#111111';
     fNew.checked = false; fPop.checked = false; fSfc.checked = false;
     formTitle.textContent = '// Add A Game';
     saveBtn.textContent = 'Add Game';
     cancelBtn.style.display = 'none';
     saveMsg.style.display = 'none';
+    closeEmojiPicker();
+    closeImgSearch();
+    imgSearchInput.value = '';
+    imgSearchResults.innerHTML = '';
     updatePreview();
   }
 
