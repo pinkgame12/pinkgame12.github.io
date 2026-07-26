@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<!-- ============================================================
+  PINKGAME — admin.html
+
+  This is the admin panel for managing the game list. It is NOT
+  linked from the public site on purpose — bookmark this page's
+  URL to get back to it.
+
+  Before this works you need to do three things in the Firebase
+  console (console.firebase.google.com → project "pinkgame-1d4bf"):
+    1. Build → Firestore Database → Create database
+    2. Build → Authentication → Sign-in method → enable "Email/Password"
+    3. Authentication → Users → Add user → set the email + password
+       you'll log into THIS page with.
+  Full instructions were given alongside this file.
+
+  Once logged in, you can:
+    - Add a new game
+    - Edit an existing game
+    - Delete a game
+  Changes show up on games.html the next time it's loaded —
+  no code edits needed.
+
+  DATA MODEL: all games are stored as one array inside a single
+  Firestore document (site/games). This keeps public page loads
+  on games.html down to a single read, which matters a lot for
+  staying within Firestore's free daily quota on a busy site.
+  It also means saves here read the whole list, change it in
+  memory, and write the whole list back — so don't run two admin
+  tabs at once, or whichever saves last will win.
+============================================================ -->
+
+<title>PinkGame — Admin</title>
+<link rel="icon" type="image/x-icon" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --pink:  #FF2D8A;
+  --glow:  #FF2D8A88;
+  --dark:  #0a0a0a;
+  --card:  #111111;
+  --text:  #cccccc;
+  --danger: #ff4d4d;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--dark);
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(#FF2D8A09 1px, transparent 1px),
+    linear-gradient(90deg, #FF2D8A09 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none; z-index: 0;
+}
+
+header {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 36px; height: 60px;
+  background: #0a0a0af0;
+  border-bottom: 1px solid #FF2D8A22;
+  backdrop-filter: blur(12px);
+}
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900; font-size: 1.2rem;
+  color: var(--pink); letter-spacing: 3px;
+  text-shadow: 0 0 20px var(--glow);
+  text-decoration: none;
+}
+.logo span { color: #555; font-size: 0.8rem; letter-spacing: 2px; margin-left: 10px; }
+.hdr-spacer { margin-left: auto; }
+.btn-logout {
+  background: none; border: 1px solid #2a2a2a; color: #666;
+  font-family: 'Rajdhani', sans-serif; font-weight: 600;
+  font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase;
+  padding: 7px 16px; border-radius: 4px; cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+main {
+  position: relative; z-index: 5;
+  max-width: 1100px; margin: 0 auto;
+  padding: 40px 36px 100px;
+}
+
+/* ── LOGIN VIEW ─────────────────────────────────────────── */
+#loginView {
+  max-width: 380px; margin: 90px auto 0;
+  background: var(--card); border: 1px solid #1a1a1a;
+  border-radius: 8px; padding: 32px;
+}
+#loginView h1 {
+  font-family: 'Orbitron', monospace; font-size: 1.1rem;
+  color: #fff; margin-bottom: 6px; letter-spacing: 1px;
+}
+#loginView p.sub { color: #444; font-size: 0.85rem; margin-bottom: 22px; }
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: #555; margin-bottom: 6px;
+}
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="password"],
+.field input[type="url"],
+.field select {
+  width: 100%; background: #161616; border: 1px solid #222;
+  color: #ddd; font-family: 'Rajdhani', sans-serif; font-weight: 500;
+  font-size: 0.95rem; padding: 10px 12px; border-radius: 5px;
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--pink); box-shadow: 0 0 0 2px #FF2D8A18;
+}
+.field input::placeholder { color: #3a3a3a; }
+
+.btn-primary {
+  background: var(--pink); border: none; color: #fff;
+  font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;
+  padding: 11px 22px; border-radius: 5px; cursor: pointer;
+  box-shadow: 0 0 18px #FF2D8A44; transition: transform 0.1s, box-shadow 0.15s;
+  width: 100%;
+}
+.btn-primary:hover { box-shadow: 0 0 26px #FF2D8A77; }
+.btn-primary:active { transform: scale(0.98); }
+
+.error-box {
+  background: #2a0f14; border: 1px solid #55202a; color: #ff8a94;
+  font-size: 0.82rem; font-weight: 600; padding: 9px 12px;
+  border-radius: 5px; margin-bottom: 14px; display: none;
+}
+
+/* ── ADMIN DASHBOARD ────────────────────────────────────── */
+#adminView { display: none; }
+
+.panel {
+  background: var(--card); border: 1px solid #1a1a1a;
+  border-radius: 8px; padding: 26px; margin-bottom: 28px;
+}
+.panel h2 {
+  font-family: 'Orbitron', monospace; font-size: 0.85rem;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--pink);
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px;
+}
+.form-grid .span-2 { grid-column: 1 / -1; }
+
+.checkbox-row {
+  display: flex; gap: 22px; align-items: center; flex-wrap: wrap;
+  padding-top: 4px;
+}
+.checkbox-row label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.85rem; font-weight: 600; color: #999; cursor: pointer;
+}
+.checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--pink); cursor: pointer; }
+
+.thumb-preview {
+  width: 100%; aspect-ratio: 16/10; border-radius: 6px;
+  background: #161616; border: 1px solid #222;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; font-size: 2rem; color: #333;
+}
+.thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+.form-actions .btn-primary { width: auto; flex: 1; }
+.btn-cancel {
+  background: none; border: 1px solid #2a2a2a; color: #777;
+  font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;
+  padding: 11px 20px; border-radius: 5px; cursor: pointer; display: none;
+}
+.btn-cancel:hover { border-color: #555; color: #ccc; }
+
+.save-msg {
+  font-size: 0.8rem; font-weight: 600; margin-top: 12px; display: none;
+}
+.save-msg.ok { color: #4dff9e; }
+.save-msg.err { color: var(--danger); }
+
+/* ── GAMES LIST ─────────────────────────────────────────── */
+.list-toolbar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.list-toolbar input {
+  flex: 1; background: #161616; border: 1px solid #222; color: #ddd;
+  font-family: 'Rajdhani', sans-serif; font-size: 0.9rem;
+  padding: 9px 12px; border-radius: 5px; outline: none;
+}
+.list-toolbar input:focus { border-color: var(--pink); }
+.count-pill {
+  font-family: 'Orbitron', monospace; font-size: 0.7rem;
+  color: #555; letter-spacing: 1px; white-space: nowrap;
+}
+
+.game-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px; border-bottom: 1px solid #181818;
+}
+.game-row:last-child { border-bottom: none; }
+.row-thumb {
+  width: 64px; height: 40px; border-radius: 4px; overflow: hidden;
+  background: #161616; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+.row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.row-info { flex: 1; min-width: 0; }
+.row-name { font-weight: 700; font-size: 0.92rem; color: #ddd; }
+.row-meta { font-size: 0.72rem; color: #444; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.row-badges { display: flex; gap: 5px; flex-shrink: 0; }
+.mini-badge {
+  font-family: 'Orbitron', monospace; font-size: 0.55rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px; color: #fff; letter-spacing: 0.5px;
+}
+.mini-badge.new { background: var(--pink); }
+.mini-badge.hot { background: #ff8c00; }
+.mini-badge.sfc { background: #1a6fff; }
+.row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.row-actions button {
+  background: none; border: 1px solid #262626; color: #888;
+  font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  font-size: 0.72rem; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: all 0.15s;
+}
+.row-actions .btn-edit:hover { border-color: var(--pink); color: var(--pink); }
+.row-actions .btn-delete:hover { border-color: var(--danger); color: var(--danger); }
+
+.empty-note, .loading-note {
+  color: #444; font-size: 0.85rem; text-align: center; padding: 30px 0;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">PINKGAME <span>ADMIN</span></a>
+  <div class="hdr-spacer"></div>
+  <button class="btn-logout" id="logoutBtn" style="display:none;">Log Out</button>
+</header>
+
+<main>
+
+  <!-- ============================================================
+    LOGIN VIEW — shown until an admin account signs in
+  ============================================================ -->
+  <div id="loginView">
+    <h1>Admin Login</h1>
+    <p class="sub">Sign in with the admin account you created in Firebase.</p>
+    <div class="error-box" id="loginError"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn-primary" id="loginBtn">Sign In</button>
+  </div>
+
+  <!-- ============================================================
+    ADMIN DASHBOARD — shown after login
+  ============================================================ -->
+  <div id="adminView">
+
+    <!-- ADD / EDIT GAME FORM -->
+    <div class="panel">
+      <h2 id="formTitle">// Add A Game</h2>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>Name *</label>
+          <input type="text" id="fName" placeholder="e.g. Cookie Clicker!"/>
+        </div>
+
+        <div class="field">
+          <label>Game URL *</label>
+          <input type="url" id="fUrl" placeholder="https://..."/>
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <input type="text" id="fCat" list="catList" placeholder="arcade"/>
+          <datalist id="catList">
+            <option value="arcade">
+            <option value="puzzle">
+            <option value="action">
+            <option value="io">
+            <option value="strategy">
+          </datalist>
+        </div>
+
+        <div class="field span-2">
+          <label>Thumbnail Image URL (leave blank to use the emoji instead)</label>
+          <input type="url" id="fImg" placeholder="https://..."/>
+        </div>
+
+        <div class="field">
+          <label>Emoji Fallback</label>
+          <input type="text" id="fEmoji" placeholder="🎮" maxlength="8"/>
+        </div>
+        <div class="field">
+          <label>Background Color</label>
+          <input type="text" id="fBg" placeholder="#111111" value="#111111"/>
+        </div>
+
+        <div class="field span-2">
+          <label>Preview</label>
+          <div class="thumb-preview" id="thumbPreview">🎮</div>
+        </div>
+
+        <div class="field span-2 checkbox-row">
+          <label><input type="checkbox" id="fNew"/> NEW badge</label>
+          <label><input type="checkbox" id="fPop"/> HOT badge</label>
+          <label><input type="checkbox" id="fSfc"/> SFC badge</label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" id="saveBtn">Add Game</button>
+        <button class="btn-cancel" id="cancelBtn">Cancel Edit</button>
+      </div>
+      <div class="save-msg" id="saveMsg"></div>
+    </div>
+
+    <!-- GAMES LIST -->
+    <div class="panel">
+      <h2>// All Games</h2>
+      <div class="list-toolbar">
+        <input type="text" id="listSearch" placeholder="Filter by name or category..."/>
+        <span class="count-pill" id="listCount">0 games</span>
+      </div>
+      <div id="gamesList"><div class="loading-note">Loading games…</div></div>
+    </div>
+
+  </div>
+
+</main>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+  import {
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+  } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+  import {
+    getFirestore, doc, getDoc, setDoc
+  } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3jxwyH9Pws4nhIT9ScDffk5CpHa99oMM",
+    authDomain: "pinkgame-1d4bf.firebaseapp.com",
+    projectId: "pinkgame-1d4bf",
+    storageBucket: "pinkgame-1d4bf.firebasestorage.app",
+    messagingSenderId: "531941128309",
+    appId: "1:531941128309:web:82e55394c6f48666a3603c",
+    measurementId: "G-WF5YT7S04W"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // ── AUTH ──────────────────────────────────────────────────
+  const loginView = document.getElementById('loginView');
+  const adminView = document.getElementById('adminView');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const loginError = document.getElementById('loginError');
+
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    loginError.style.display = 'none';
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      loginError.textContent = 'Sign-in failed — check the email and password and try again.';
+      loginError.style.display = 'block';
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loginView.style.display = 'none';
+      adminView.style.display = 'block';
+      logoutBtn.style.display = 'inline-block';
+      loadGamesList();
+    } else {
+      loginView.style.display = 'block';
+      adminView.style.display = 'none';
+      logoutBtn.style.display = 'none';
+    }
+  });
+
+  // ── FORM STATE ────────────────────────────────────────────
+  // All games are stored as ONE array in ONE Firestore document
+  // (site/games, field "list") rather than one document per game.
+  // This keeps public reads on games.html to a single read no matter
+  // how many games exist. Every add/edit/delete here works by editing
+  // the in-memory `allGames` array and writing the WHOLE array back —
+  // there's no per-game document to add/update/delete individually.
+  // Each game gets its own random `id` (generated in the browser) so
+  // edit/delete can find the right entry inside the array.
+  let editingId = null;      // id of the game being edited, or null when adding
+  let allGames = [];         // cached list for the games panel
+  let listFilter = '';
+
+  function newGameId() {
+    return (crypto.randomUUID ? crypto.randomUUID() : `g_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+  }
+
+  async function saveGamesList(updatedList) {
+    await setDoc(doc(db, 'site', 'games'), { list: updatedList });
+    allGames = updatedList;
+  }
+
+  const fName = document.getElementById('fName');
+  const fUrl = document.getElementById('fUrl');
+  const fCat = document.getElementById('fCat');
+  const fImg = document.getElementById('fImg');
+  const fEmoji = document.getElementById('fEmoji');
+  const fBg = document.getElementById('fBg');
+  const fNew = document.getElementById('fNew');
+  const fPop = document.getElementById('fPop');
+  const fSfc = document.getElementById('fSfc');
+  const thumbPreview = document.getElementById('thumbPreview');
+  const formTitle = document.getElementById('formTitle');
+  const saveBtn = document.getElementById('saveBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const saveMsg = document.getElementById('saveMsg');
+
+  function updatePreview() {
+    const url = fImg.value.trim();
+    if (url) {
+      thumbPreview.innerHTML = `<img src="${escapeHtml(url)}" onerror="this.parentElement.textContent='⚠️ image failed to load'">`;
+    } else {
+      thumbPreview.textContent = fEmoji.value.trim() || '🎮';
+    }
+  }
+  fImg.addEventListener('input', updatePreview);
+  fEmoji.addEventListener('input', updatePreview);
+
+  function resetForm() {
+    editingId = null;
+    fName.value = ''; fUrl.value = ''; fCat.value = ''; fImg.value = '';
+    fEmoji.value = ''; fBg.value = '#111111';
+    fNew.checked = false; fPop.checked = false; fSfc.checked = false;
+    formTitle.textContent = '// Add A Game';
+    saveBtn.textContent = 'Add Game';
+    cancelBtn.style.display = 'none';
+    saveMsg.style.display = 'none';
+    updatePreview();
+  }
+
+  cancelBtn.addEventListener('click', resetForm);
+
+  saveBtn.addEventListener('click', async () => {
+    const name = fName.value.trim();
+    const url = fUrl.value.trim();
+    if (!name || !url) {
+      saveMsg.textContent = 'Name and Game URL are required.';
+      saveMsg.className = 'save-msg err';
+      saveMsg.style.display = 'block';
+      return;
+    }
+
+    const gameData = {
+      id: editingId || newGameId(),
+      name,
+      url,
+      cat: fCat.value.trim() || 'arcade',
+      img: fImg.value.trim() || null,
+      emoji: fEmoji.value.trim() || '🎮',
+      bg: fBg.value.trim() || '#111111',
+      isNew: fNew.checked,
+      isPop: fPop.checked,
+      isSfc: fSfc.checked,
+    };
+
+    saveBtn.disabled = true;
+    try {
+      let updatedList;
+      if (editingId) {
+        updatedList = allGames.map(g => g.id === editingId ? gameData : g);
+        saveMsg.textContent = 'Game updated.';
+      } else {
+        updatedList = [...allGames, gameData]; // new games go at the end of the list
+        saveMsg.textContent = 'Game added.';
+      }
+      await saveGamesList(updatedList);
+      saveMsg.className = 'save-msg ok';
+      saveMsg.style.display = 'block';
+      resetForm();
+      renderList();
+    } catch (err) {
+      console.error(err);
+      saveMsg.textContent = 'Could not save — check your Firestore rules and connection.';
+      saveMsg.className = 'save-msg err';
+      saveMsg.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+
+  // ── GAMES LIST ────────────────────────────────────────────
+  document.getElementById('listSearch').addEventListener('input', (e) => {
+    listFilter = e.target.value.toLowerCase();
+    renderList();
+  });
+
+  async function loadGamesList() {
+    const listEl = document.getElementById('gamesList');
+    try {
+      const snap = await getDoc(doc(db, 'site', 'games'));
+      allGames = snap.exists() ? (snap.data().list || []) : [];
+    } catch (err) {
+      console.error(err);
+      listEl.innerHTML = '<div class="empty-note">Could not load games — check Firestore is set up and rules allow reads.</div>';
+      return;
+    }
+    renderList();
+  }
+
+  function renderList() {
+    const listEl = document.getElementById('gamesList');
+    const filtered = allGames.filter(g =>
+      (g.name || '').toLowerCase().includes(listFilter) ||
+      (g.cat || '').toLowerCase().includes(listFilter)
+    );
+    document.getElementById('listCount').textContent = `${filtered.length} game${filtered.length === 1 ? '' : 's'}`;
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div class="empty-note">No games yet — add one above.</div>';
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(g => {
+      const thumb = g.img
+        ? `<img src="${escapeHtml(g.img)}" loading="lazy">`
+        : escapeHtml(g.emoji || '🎮');
+      const badges = [
+        g.isNew ? '<span class="mini-badge new">NEW</span>' : '',
+        g.isPop ? '<span class="mini-badge hot">HOT</span>' : '',
+        g.isSfc ? '<span class="mini-badge sfc">SFC</span>' : '',
+      ].join('');
+      return `
+      <div class="game-row">
+        <div class="row-thumb">${thumb}</div>
+        <div class="row-info">
+          <div class="row-name">${escapeHtml(g.name)}</div>
+          <div class="row-meta">${escapeHtml(g.cat)}</div>
+        </div>
+        <div class="row-badges">${badges}</div>
+        <div class="row-actions">
+          <button class="btn-edit" data-id="${g.id}">Edit</button>
+          <button class="btn-delete" data-id="${g.id}">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('.btn-edit').forEach(btn =>
+      btn.addEventListener('click', () => startEdit(btn.dataset.id))
+    );
+    listEl.querySelectorAll('.btn-delete').forEach(btn =>
+      btn.addEventListener('click', () => deleteGame(btn.dataset.id))
+    );
+  }
+
+  function startEdit(id) {
+    const g = allGames.find(x => x.id === id);
+    if (!g) return;
+    editingId = g.id;
+    fName.value = g.name || '';
+    fUrl.value = g.url || '';
+    fCat.value = g.cat || '';
+    fImg.value = g.img || '';
+    fEmoji.value = g.emoji || '';
+    fBg.value = g.bg || '#111111';
+    fNew.checked = !!g.isNew;
+    fPop.checked = !!g.isPop;
+    fSfc.checked = !!g.isSfc;
+    formTitle.textContent = `// Editing "${g.name}"`;
+    saveBtn.textContent = 'Update Game';
+    cancelBtn.style.display = 'inline-block';
+    saveMsg.style.display = 'none';
+    updatePreview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function deleteGame(id) {
+    const g = allGames.find(x => x.id === id);
+    if (!g) return;
+    if (!confirm(`Delete "${g.name}"? This can't be undone.`)) return;
+    try {
+      const updatedList = allGames.filter(x => x.id !== id);
+      await saveGamesList(updatedList);
+      if (editingId === id) resetForm();
+      renderList();
+    } catch (err) {
+      console.error(err);
+      alert('Could not delete — check your Firestore rules and connection.');
+    }
+  }
+
+  updatePreview();
+</script>
+</body>
+</html>
