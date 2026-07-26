@@ -4,6 +4,15 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+<!-- ============================================================
+  PINKGAME — popular.html
+  Shows every game marked with the HOT badge (isPop: true) in
+  admin.html. Reads from the SAME database as games.html — there's
+  nothing to manage here, and nothing to edit when the game list
+  changes. Toggle "HOT badge" on a game in admin.html and it shows
+  up (or disappears from) this page automatically.
+============================================================ -->
+
 <title>PinkGame — Popular</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
@@ -135,6 +144,15 @@ nav a.active { color: var(--pink); }
   gap: 12px;
 }
 
+.loading-msg, .error-msg {
+  grid-column: 1 / -1;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem; font-weight: 600;
+  letter-spacing: 0.5px; color: #444;
+  padding: 40px 0; text-align: center;
+}
+.error-msg { color: #ff6b6b; }
+
 .game-card {
   background: var(--card); border: 1px solid #1a1a1a;
   border-radius: 7px; overflow: hidden;
@@ -243,119 +261,120 @@ footer a { color: inherit; text-decoration: none; }
 
 <div class="grid-section">
   <div class="section-label"><b>//</b> <span id="sectionCount">0</span> Popular Games</div>
-  <div class="game-grid" id="gameGrid"></div>
+  <div class="game-grid" id="gameGrid"><div class="loading-msg">Loading games…</div></div>
 </div>
 
 <footer><b>PINKGAME</b> &nbsp;—&nbsp; Popular Games &nbsp;—&nbsp; <b><a href="otherwebsites.html">OTHER WEBSITES</a></b></footer>
 
-<script>
-const games = [
-  { id:1, name:"Jetpack Joyride!", emoji:"🚀", img:"https://tse2.mm.bing.net/th/id/OIP.pEu5r8OQgSMaKKkvK5yV6AHaDn?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/jetpack-joyride", isNew:false, isPop:false, isSfc:false },
-  { id:2, name:"Doom 1+2!", emoji:"💥", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeXeJFJB24bPdjHgRUCyIaavYqeB9oe9Rsgw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/webDOOM/public", isNew:false, isPop:true, isSfc:true },
-  { id:3, name:"Drift Boss!", emoji:"🚗", img:"https://tse1.mm.bing.net/th/id/OIP.e-rHpfrNDgjrb5WCJtmgnAHaES?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/drift-boss/", isNew:false, isPop:false, isSfc:false },
-  { id:4, name:"Animal Arena!", emoji:"🐾", img:"https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2673990/header.jpg?t=1723312296", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/animal-arena/", isNew:false, isPop:false, isSfc:false },
-  { id:5, name:"Dinosaur Game!", emoji:"🦖", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTriRa08LT5_44xw-Rqo3_BpkSEPS47B0_B-A&s", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/dinosaur-game/", isNew:false, isPop:false, isSfc:false },
-  { id:6, name:"PokemonFireRed!", emoji:"🔥", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzDMK5DgCHi7UohqEi6ijL_0_TiMBAu8-zCA&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/pokemon-firered/", isNew:false, isPop:false, isSfc:false },
-  { id:7, name:"Rocket League!", emoji:"⚽", img:"https://th.bing.com/th/id/R.9c31ca384c511abc490976fbe0d77513?rik=0iquzU6dhN6zYQ&pid=ImgRaw&r=0", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/rocketsoccerderby/", isNew:false, isPop:false, isSfc:false },
-  { id:8, name:"Run 3!", emoji:"🏃", img:"https://tse4.mm.bing.net/th/id/OIP.iJjSsJ2T4Ynyn72cZw1rTgHaEU?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/run3", isNew:false, isPop:false, isSfc:false },
-  { id:9, name:"GladiHoppers!", emoji:"⚔️", img:"https://tse3.mm.bing.net/th/id/OIP.5Tr4GwjxoPA_DzPJAW1C6wHaDn?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/gladdihoppers", isNew:false, isPop:false, isSfc:false },
-  { id:10, name:"1v1.LoL!", emoji:"🎯", img:"https://tse2.mm.bing.net/th/id/OIP.ASM6tUWCDbxvnZvSQT1GWgHaD4?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/1v1lol", isNew:false, isPop:false, isSfc:false },
-  { id:11, name:"FNAF Sister Location!", emoji:"🐻", img:"https://tse2.mm.bing.net/th/id/OIP.tmrpqrpz-I7DUfsZnerfkQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnafsl", isNew:false, isPop:false, isSfc:false },
-  { id:12, name:"FNAF 4 Halloween!", emoji:"🎃", img:"https://github.com/SchoolFlashCards5/flashcards/blob/main/fnaf4halloween.jpg?raw=true", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf4halloween", isNew:false, isPop:false, isSfc:false },
-  { id:13, name:"FNAF 3!", emoji:"🐻", img:"https://th.bing.com/th/id/OIP.TQtgkQVqbouFFZjEaogyCgHaEK?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf3", isNew:false, isPop:false, isSfc:false },
-  { id:14, name:"A Dance of Fire and Ice", emoji:"🎵", img:"https://tse1.mm.bing.net/th/id/OIP.-qLRR7Qoa0e5FYOvdKL_fgHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/fire-ice/", isNew:false, isPop:false, isSfc:false },
-  { id:15, name:"Geometry Lite!", emoji:"🔷", img:"https://tse3.mm.bing.net/th/id/OIP.mPXfDKMpSF5nK-gIuWY3sQHaEK?rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/geometry-lite/", isNew:false, isPop:true, isSfc:false },
-  { id:16, name:"FNAF 2!", emoji:"🐻", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSv9kqCGr10bvrGn5DU3G8NmTeNPtqZjxYCIw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf2", isNew:false, isPop:false, isSfc:true },
-  { id:17, name:"FNAF 1!", emoji:"🐻", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSFgSrXhj4YY-AAx5_P_CBBdYX5DSuVh8bZw&s", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fnaf1", isNew:false, isPop:false, isSfc:true },
-  { id:18, name:"2048!", emoji:"🔢", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqkypx7h26Ajb7LRsl5sbxzRIrZWvGN0TZZA&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/2048", isNew:false, isPop:false, isSfc:true },
-  { id:19, name:"Block Blast!", emoji:"🧩", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNhEnACclj7tRbtrB-TSUozTK3YBLm2Cghrw&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/blockblast", isNew:false, isPop:false, isSfc:true },
-  { id:20, name:"Snow Rider!", emoji:"🛷", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_XIUk_3JSrxB_yzBYnqzOVtm-Qdw4DGLctg&s", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/snowrider", isNew:false, isPop:false, isSfc:false },
-  { id:21, name:"Minesweeper!", emoji:"💣", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRCwIdCYJnRmDUQnpDKNvY31bHNh_3NevoPjg&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/minesweeper", isNew:false, isPop:false, isSfc:true },
-  { id:22, name:"Minecraft!", emoji:"⛏️", img:"https://wallpaper.dog/large/815735.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/mc", isNew:false, isPop:true, isSfc:false },
-  { id:23, name:"CSGO Clicker!", emoji:"🔫", img:"https://geometrydash.io/data/image/game/csgoclicker.PNG", bg:"#111111", cat:"strategy", url:"https://schoolflashcards3.github.io/CSGOClicker/", isNew:false, isPop:false, isSfc:true },
-  { id:24, name:"Retro Bowl!", emoji:"🏈", img:"https://thegadgetlite.com/wp-content/uploads/2023/02/retro-bowl-1024x512.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/retro-bowl-unblocked", isNew:false, isPop:true, isSfc:false },
-  { id:25, name:"Subway Surfers!", emoji:"🏃", img:"https://th.bing.com/th/id/OIP.b5-KggaPRTioUNh2mk2mEgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/subway", isNew:false, isPop:false, isSfc:false },
-  { id:26, name:"Slither.IO!", emoji:"🐍", img:"https://wallpaperaccess.com/full/5720727.jpg", bg:"#111111", cat:"io", url:"https://schoolflashcards5.github.io/slither-io", isNew:false, isPop:false, isSfc:false },
-  { id:27, name:"Fruit Ninja!", emoji:"🍉", img:"https://th.bing.com/th/id/R.99388c093ab0db9347d6ecfd99370474?rik=2ISiCYnsT4GNOA&pid=ImgRaw&r=0", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/fruit-ninja", isNew:false, isPop:false, isSfc:false },
-  { id:28, name:"Cookie Clicker!", emoji:"🍪", img:"https://th.bing.com/th/id/OIP.sNzuFjc75su2lU5Pb5ZJvgHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/cookieNEW/", isNew:false, isPop:true, isSfc:true },
-  { id:29, name:"Moto X3M!", emoji:"🏍️", img:"https://imgs.crazygames.com/moto-x3m_1x1/20231122033955/moto-x3m_1x1-cover?format=auto&quality=100&metadata=none&width=1200", bg:"#111111", cat:"action", url:"https://schoolflashcards3.github.io/motox3m/", isNew:false, isPop:false, isSfc:false },
-  { id:30, name:"Bitcoin Clicker!", emoji:"₿", img:"https://img.itch.zone/aW1nLzc1MzUxOTUucG5n/original/zQmEXl.png", bg:"#111111", cat:"strategy", url:"https://schoolflashcards5.github.io/bitCoin_clicker/", isNew:false, isPop:false, isSfc:false },
-  { id:31, name:"Flappy Bird!", emoji:"🐦", img:"https://data2.1freewallpapers.com/download/flappy-bird-game-popular-1366x768.jpg", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/flappy-bird", isNew:false, isPop:false, isSfc:false },
-  { id:32, name:"Tiny Fishing!", emoji:"🎣", img:"https://th.bing.com/th/id/OIP.nPuB55Mp95w18r3p7rSOjgHaD4?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/tiny-fishing", isNew:false, isPop:false, isSfc:false },
-  { id:33, name:"Slope 3!", emoji:"🔺", img:"https://th.bing.com/th/id/OIP.FtKs5H6IkONNnA5qoyQNqwHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/slope3", isNew:false, isPop:false, isSfc:false },
-  { id:34, name:"Aquapark.IO!", emoji:"💧", img:"https://th.bing.com/th/id/OIP.NTFKPJqkEjic45gnivPLvQHaEK?rs=1&pid=ImgDetMain", bg:"#111111", cat:"io", url:"https://schoolflashcards5.github.io/aquapark-io", isNew:false, isPop:false, isSfc:false },
-  { id:35, name:"Axis Football League!", emoji:"🏈", img:"https://retrobowlcollege.io/data/image/screenshot-2023-11-23-105503.png", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/axis-football-league", isNew:false, isPop:false, isSfc:false },
-  { id:36, name:"Crossy Road!", emoji:"🚶", img:"https://th.bing.com/th/id/OIP.ZXvaWHcoqFPZcGo78fK9SQHaDk?rs=1&pid=ImgDetMain", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/crossy-road", isNew:false, isPop:false, isSfc:false },
-  { id:37, name:"Basketball Legends!", emoji:"🏀", img:"https://th.bing.com/th/id/OIP.ollyg9Yd7zX9DNtnkzsc-gHaEJ?rs=1&pid=ImgDetMain", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/basketball-legends", isNew:false, isPop:false, isSfc:false },
-  { id:38, name:"Cut the Rope!", emoji:"🪢", img:"https://th.bing.com/th/id/OIP.raV370_mlwudwsGzK28T0wHaEB?rs=1&pid=ImgDetMain", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/cut-the-rope", isNew:false, isPop:false, isSfc:false },
-  { id:39, name:"Touchdowners!", emoji:"🏈", img:"https://www.metacritic.com/a/img/catalog/provider/6/12/6-1-635169-52.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/touchdowners", isNew:false, isPop:false, isSfc:false },
-  { id:40, name:"Truck Loader 4!", emoji:"🚚", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSsjzNG5lORTCkfqc_yn7CEhCQP5aRZP9_OOA&s", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/truck-loader-4/", isNew:false, isPop:false, isSfc:false },
-  { id:41, name:"GunSpin!", emoji:"🔫", img:"https://is1-ssl.mzstatic.com/image/thumb/Purple123/v4/7d/a4/6a/7da46af9-4953-70c6-6f3c-25444de561c9/pr_source.png/643x0w.jpg", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/gunspin/", isNew:false, isPop:false, isSfc:false },
-  { id:42, name:"Candy Jump!", emoji:"🍬", img:"https://www.coolmathgames.com/sites/default/files/CandyJump_OG-logo.jpg", bg:"#111111", cat:"puzzle", url:"https://schoolflashcards5.github.io/candy-jump/", isNew:false, isPop:false, isSfc:false },
-  { id:43, name:"Deltarune!", emoji:"🌙", img:"https://github.com/SchoolFlashCards5/flashcards/blob/main/deltarune-heroes-blue-fire-aliqfub1bewvs4i5.jpg?raw=true", bg:"#111111", cat:"action", url:"https://schoolflashcards5.github.io/deltarune/", isNew:false, isPop:false, isSfc:false },
-  { id:44, name:"Going Balls!", emoji:"🏐", img:"https://th.bing.com/th/id/OIP.m0rTMLzpv5jQhJ4NADqmdgHaE8?r=0&o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3", bg:"#111111", cat:"arcade", url:"https://schoolflashcards5.github.io/going-balls/play", isNew:false, isPop:false, isSfc:true },
-];
+<!-- ============================================================
+  FIREBASE + GAMES DATA/RENDERING
+  Reads the same site/games document games.html and admin.html use,
+  then shows only the games with isPop: true. Nothing here needs
+  editing — mark/unmark a game's HOT badge in admin.html and this
+  page updates automatically the next time it loads.
+============================================================ -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+  import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js';
+  import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
-let searchTerm = '';
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3jxwyH9Pws4nhIT9ScDffk5CpHa99oMM",
+    authDomain: "pinkgame-1d4bf.firebaseapp.com",
+    projectId: "pinkgame-1d4bf",
+    storageBucket: "pinkgame-1d4bf.firebasestorage.app",
+    messagingSenderId: "531941128309",
+    appId: "1:531941128309:web:82e55394c6f48666a3603c",
+    measurementId: "G-WF5YT7S04W"
+  };
 
-function filterGames() {
-  const input = document.getElementById('searchInput');
-  searchTerm = input ? input.value.toLowerCase() : '';
-  renderGrid();
-}
+  const app = initializeApp(firebaseConfig);
+  let analytics;
+  try { analytics = getAnalytics(app); } catch (e) {}
+  window.fbLog = (name, params = {}) => {
+    try { if (analytics) logEvent(analytics, name, params); } catch (e) {}
+  };
 
-function renderGrid() {
-  const grid = document.getElementById('gameGrid');
-  const count = document.getElementById('sectionCount');
-  if (!grid || !count) return;
+  const db = getFirestore(app);
 
-  const filtered = games.filter(g =>
-    g.isPop === true &&
-    g.name.toLowerCase().includes(searchTerm)
-  );
-
-  count.textContent = filtered.length;
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `
-      <div style="grid-column:1/-1;padding:20px;border:1px solid #222;background:#111;border-radius:8px;color:#777;">
-        No popular games found.
-      </div>
-    `;
-    return;
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
   }
 
-  grid.innerHTML = filtered.map(g => {
-    const thumb = g.img
-      ? `<img src="${g.img}" alt="${g.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;">`
-      : `<span style="position:relative;z-index:1;">${g.emoji}</span>`;
+  let allGames = [];
+  let searchTerm = '';
 
-    return `
-      <div class="game-card" onclick="openGame(${g.id})">
-        <div class="badge-popular">HOT</div>
-        <div class="thumb" style="background: radial-gradient(circle at 35% 35%, ${g.bg}, #0a0a0a); position:relative;">
-          ${thumb}
-          <div class="play-overlay"><div class="play-btn">▶</div></div>
-        </div>
-        <div class="info">
-          <div class="name">${g.name}</div>
-          <span class="tag">${g.cat}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function openGame(id) {
-  const g = games.find(x => x.id === id);
-  if (!g || !g.url || !g.url.trim()) {
-    alert("This game has no URL set yet.");
-    return;
+  async function loadGames() {
+    const gridEl = document.getElementById('gameGrid');
+    try {
+      const snap = await getDoc(doc(db, 'site', 'games'));
+      allGames = snap.exists() ? (snap.data().list || []) : [];
+    } catch (err) {
+      console.error('Failed to load games from Firestore:', err);
+      gridEl.innerHTML = '<div class="error-msg">Couldn\'t load games right now. Please refresh the page.</div>';
+      return;
+    }
+    renderGrid();
   }
-  window.open(g.url, '_blank');
-}
 
-document.addEventListener('DOMContentLoaded', renderGrid);
+  window.filterGames = function () {
+    const input = document.getElementById('searchInput');
+    searchTerm = input ? input.value.toLowerCase() : '';
+    window.fbLog?.('site_search', { query_length: searchTerm.length, page: 'popular' });
+    renderGrid();
+  };
+
+  function renderGrid() {
+    const grid = document.getElementById('gameGrid');
+    const count = document.getElementById('sectionCount');
+    if (!grid || !count) return;
+
+    const filtered = allGames.filter(g =>
+      g.isPop === true &&
+      (g.name || '').toLowerCase().includes(searchTerm)
+    );
+
+    count.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="loading-msg">No popular games found.</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(g => {
+      const thumb = g.img
+        ? `<img src="${escapeHtml(g.img)}" alt="${escapeHtml(g.name)}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;">`
+        : `<span style="position:relative;z-index:1;">${escapeHtml(g.emoji || '🎮')}</span>`;
+
+      return `
+        <div class="game-card" onclick="openGame('${g.id}')">
+          <div class="badge-popular">HOT</div>
+          <div class="thumb" style="background: radial-gradient(circle at 35% 35%, ${escapeHtml(g.bg || '#111111')}, #0a0a0a); position:relative;">
+            ${thumb}
+            <div class="play-overlay"><div class="play-btn">▶</div></div>
+          </div>
+          <div class="info">
+            <div class="name">${escapeHtml(g.name)}</div>
+            <span class="tag">${escapeHtml(g.cat)}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.openGame = function (id) {
+    const g = allGames.find(x => x.id === id);
+    if (!g || !g.url || !g.url.trim()) {
+      alert("This game has no URL set yet.");
+      return;
+    }
+    window.fbLog?.('game_open', { game_id: g.id, game_name: g.name, game_category: g.cat, page: 'popular' });
+    window.open(g.url, '_blank');
+  };
+
+  loadGames();
 </script>
 </body>
 </html>
